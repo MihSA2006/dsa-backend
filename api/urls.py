@@ -9,7 +9,7 @@ from .views import (
     SecurityInfoView,
     ChallengeViewSet,
     TestCaseViewSet,
-    ChallengeSubmissionView
+    # ChallengeSubmissionView
 )
 
 app_name = 'api'
@@ -29,7 +29,7 @@ urlpatterns = [
     path('security-info/', SecurityInfoView.as_view(), name='security-info'),
     
     # Endpoint de soumission de challenge
-    path('challenges/submit/', ChallengeSubmissionView.as_view(), name='challenge-submit'),
+    # path('challenges/submit/', ChallengeSubmissionView.as_view(), name='challenge-submit'),
     
     # Routes du router (challenges et test-cases)
     path('', include(router.urls)),

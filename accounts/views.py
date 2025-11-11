@@ -123,7 +123,7 @@ def complete_registration(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+# @permission_classes([IsAdminUser])
 def list_users(request):
     """Liste tous les utilisateurs (admin seulement)"""
     users = User.objects.all()

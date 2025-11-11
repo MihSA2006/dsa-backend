@@ -251,85 +251,85 @@ class TestCaseViewSet(viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ChallengeSubmissionView(APIView):
-    """
-    Vue pour soumettre une solution à un challenge
+# class ChallengeSubmissionView(APIView):
+#     """
+#     Vue pour soumettre une solution à un challenge
     
-    POST /api/challenges/submit/
-    Body: {
-        "challenge_id": 1,
-        "code": "..."
-    }
-    """
+#     POST /api/challenges/submit/
+#     Body: {
+#         "challenge_id": 1,
+#         "code": "..."
+#     }
+#     """
     
-    def post(self, request):
-        """Soumet et valide la solution d'un challenge"""
+#     def post(self, request):
+#         """Soumet et valide la solution d'un challenge"""
         
-        # 1. Valider les données reçues
-        serializer = ChallengeSubmissionSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {'error': serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#         # 1. Valider les données reçues
+#         serializer = ChallengeSubmissionSerializer(data=request.data)
+#         if not serializer.is_valid():
+#             return Response(
+#                 {'error': serializer.errors},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
         
-        challenge_id = serializer.validated_data['challenge_id']
-        user_code = serializer.validated_data['code']
+#         challenge_id = serializer.validated_data['challenge_id']
+#         user_code = serializer.validated_data['code']
         
-        # 2. Récupérer le challenge
-        try:
-            challenge = Challenge.objects.get(id=challenge_id, is_active=True)
-        except Challenge.DoesNotExist:
-            return Response(
-                {'error': 'Challenge introuvable'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+#         # 2. Récupérer le challenge
+#         try:
+#             challenge = Challenge.objects.get(id=challenge_id, is_active=True)
+#         except Challenge.DoesNotExist:
+#             return Response(
+#                 {'error': 'Challenge introuvable'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
         
-        # 3. Vérifier la sécurité du code
-        from .security import SecurityChecker
-        security_checker = SecurityChecker()
-        is_safe, error_message = security_checker.check_code(user_code)
+#         # 3. Vérifier la sécurité du code
+#         from .security import SecurityChecker
+#         security_checker = SecurityChecker()
+#         is_safe, error_message = security_checker.check_code(user_code)
         
-        if not is_safe:
-            return Response(
-                {
-                    'success': False,
-                    'error': f'Sécurité : {error_message}'
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#         if not is_safe:
+#             return Response(
+#                 {
+#                     'success': False,
+#                     'error': f'Sécurité : {error_message}'
+#                 },
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
         
-        # 4. Récupérer tous les test cases
-        test_cases = challenge.test_cases.all()
+#         # 4. Récupérer tous les test cases
+#         test_cases = challenge.test_cases.all()
         
-        if not test_cases.exists():
-            return Response(
-                {'error': 'Ce challenge n\'a pas de test cases'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#         if not test_cases.exists():
+#             return Response(
+#                 {'error': 'Ce challenge n\'a pas de test cases'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
         
-        # 5. Préparer les test cases pour la validation
-        test_data = []
-        for tc in test_cases:
-            test_data.append({
-                'input_content': tc.get_input(),
-                'expected_output': tc.get_output(),
-                'order': tc.order
-            })
+#         # 5. Préparer les test cases pour la validation
+#         test_data = []
+#         for tc in test_cases:
+#             test_data.append({
+#                 'input_content': tc.get_input(),
+#                 'expected_output': tc.get_output(),
+#                 'order': tc.order
+#             })
         
-        # 6. Valider le code
-        try:
-            validator = ChallengeValidator(timeout=10)
-            result = validator.validate_submission(user_code, test_data)
+#         # 6. Valider le code
+#         try:
+#             validator = ChallengeValidator(timeout=10)
+#             result = validator.validate_submission(user_code, test_data)
             
-            return Response(result, status=status.HTTP_200_OK)
+#             return Response(result, status=status.HTTP_200_OK)
         
-        except Exception as e:
-            logger.error(f"Erreur lors de la validation : {str(e)}")
-            return Response(
-                {
-                    'success': False,
-                    'error': f'Erreur serveur : {str(e)}'
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+#         except Exception as e:
+#             logger.error(f"Erreur lors de la validation : {str(e)}")
+#             return Response(
+#                 {
+#                     'success': False,
+#                     'error': f'Erreur serveur : {str(e)}'
+#                 },
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
