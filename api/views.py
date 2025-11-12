@@ -502,6 +502,108 @@ def submit_challenge_solution(request, challenge_id):
         )
 
 
+# views.py
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def test_challenge_solution(request, challenge_id):
+    """
+    Teste une solution pour un challenge sans l'enregistrer.
+    Permet à l'utilisateur de voir si son code passe tous les tests
+    avant de le soumettre officiellement.
+    
+    POST /api/challenges/{id}/test/
+    Body: {
+        "code": "..."
+    }
+    """
+    # Vérifier que l'utilisateur a rejoint le challenge
+    try:
+        attempt = UserChallengeAttempt.objects.get(
+            user=request.user,
+            challenge_id=challenge_id
+        )
+    except UserChallengeAttempt.DoesNotExist:
+        return Response(
+            {'error': "Vous devez d'abord rejoindre ce challenge"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Récupérer le challenge actif
+    try:
+        challenge = Challenge.objects.get(id=challenge_id, is_active=True)
+    except Challenge.DoesNotExist:
+        return Response(
+            {'error': 'Challenge introuvable'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Récupérer le code
+    code = request.data.get('code')
+    if not code:
+        return Response(
+            {'error': 'Le code est requis'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Vérifier la sécurité du code
+    from .security import SecurityChecker
+    security_checker = SecurityChecker()
+    is_safe, error_message = security_checker.check_code(code)
+
+    if not is_safe:
+        return Response(
+            {
+                'success': False,
+                'error': f"Sécurité : {error_message}"
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Récupérer les test cases
+    test_cases = challenge.test_cases.all()
+    if not test_cases.exists():
+        return Response(
+            {'error': 'Ce challenge ne contient pas encore de tests.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Préparer les test data
+    test_data = []
+    for tc in test_cases:
+        test_data.append({
+            'input_content': tc.get_input(),
+            'expected_output': tc.get_output(),
+            'order': tc.order
+        })
+
+    # Valider la solution sans enregistrer le résultat
+    try:
+        from .challenge_validator import ChallengeValidator
+        validator = ChallengeValidator(timeout=10)
+        result = validator.validate_submission(code, test_data)
+
+        # Ajout d'un message clair pour le frontend
+        if result['success']:
+            result['message'] = "✅ Tous les tests ont réussi ! Vous pouvez soumettre votre solution."
+        else:
+            result['message'] = f"❌ {result['passed_tests']}/{result['total_tests']} tests réussis. Corrigez votre code avant de soumettre."
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Erreur lors du test de la solution : {str(e)}")
+        return Response(
+            {
+                'success': False,
+                'error': f"Erreur serveur : {str(e)}"
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_challenges(request):

@@ -58,27 +58,37 @@ class CodeExecutionResponseSerializer(serializers.Serializer):
     execution_time = serializers.FloatField()
 
 class TestCaseSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour les test cases
-    """
     input_content = serializers.SerializerMethodField()
     output_content = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = TestCase
-        fields = ['id', 'order', 'is_sample', 'input_content', 'output_content']
-    
+        fields = [
+            'id', 'order', 'is_sample',
+            'input_file', 'output_file',
+            'input_content', 'output_content'
+        ]
+
     def get_input_content(self, obj):
-        """Retourne le contenu du fichier input si c'est un exemple"""
-        if obj.is_sample:
-            return obj.get_input()
+        """Lire le contenu du fichier d'entrée"""
+        if obj.input_file:
+            try:
+                with open(obj.input_file.path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            except Exception as e:
+                return f"[Erreur lecture input: {e}]"
         return None
-    
+
     def get_output_content(self, obj):
-        """Retourne le contenu du fichier output si c'est un exemple"""
-        if obj.is_sample:
-            return obj.get_output()
+        """Lire le contenu du fichier de sortie"""
+        if obj.output_file:
+            try:
+                with open(obj.output_file.path, 'r', encoding='utf-8') as f:
+                    return f.read()
+            except Exception as e:
+                return f"[Erreur lecture output: {e}]"
         return None
+
 
 
 class ChallengeListSerializer(serializers.ModelSerializer):
@@ -96,24 +106,21 @@ class ChallengeListSerializer(serializers.ModelSerializer):
 
 
 class ChallengeDetailSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour le détail d'un challenge
-    """
     description = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
     test_cases = TestCaseSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = Challenge
         fields = [
             'id', 'title', 'slug', 'difficulty', 
-            'description', 'template','xp_reward', 'test_cases',
-            'created_at', 'updated_at'
+            'description', 'template', 'xp_reward', 
+            'test_cases', 'created_at', 'updated_at'
         ]
-    
+
     def get_description(self, obj):
         return obj.get_description()
-    
+
     def get_template(self, obj):
         return obj.get_template()
 
