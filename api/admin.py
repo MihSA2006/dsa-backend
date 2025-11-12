@@ -13,7 +13,7 @@ class TestCaseInline(admin.TabularInline):
 
 @admin.register(Challenge)
 class ChallengeAdmin(admin.ModelAdmin):
-    list_display = ['title', 'difficulty', 'xp_reward', 'is_active', 'created_at']
+    list_display = ['title', 'difficulty', 'xp_reward', 'is_active', 'created_at', 'participants_count']
     list_filter = ['difficulty', 'is_active', 'created_at']
     search_fields = ['title', 'slug']
     prepopulated_fields = {'slug': ('title',)}
@@ -21,7 +21,7 @@ class ChallengeAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Informations de base', {
-            'fields': ('title', 'slug', 'difficulty', 'is_active')
+            'fields': ('title', 'slug', 'difficulty', 'is_active', 'participants_count')
         }),
         ('Récompense', {
             'fields': ('xp_reward',)
