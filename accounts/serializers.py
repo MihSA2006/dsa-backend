@@ -2,7 +2,6 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import User, RegistrationToken
 
-
 class InitiateRegistrationSerializer(serializers.Serializer):
     """Serializer pour l'admin qui initie l'inscription"""
     email = serializers.EmailField()
@@ -78,3 +77,20 @@ class UserSerializer(serializers.ModelSerializer):
             'photo', 'numero_inscription', 'parcours', 'filiere',
             'challenges_joined', 'total_xp'  # 🆕 NOUVEAUX CHAMPS
         ]
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour consulter / mettre à jour le profil de l'utilisateur connecté.
+    - email en lecture seule (on le gère via token d'invitation).
+    - certains champs calculés en lecture seule.
+    """
+    class Meta:
+        model = User
+        fields = [
+            'id', 'nom', 'prenom', 'username', 'email', 'photo',
+            'numero_inscription', 'parcours', 'filiere',
+            'challenges_joined', 'total_xp'
+        ]
+        read_only_fields = (
+            'email', 'challenges_joined', 'total_xp', 'numero_inscription', 'username'
+        )

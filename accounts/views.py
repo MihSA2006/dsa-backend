@@ -1,7 +1,7 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
@@ -10,7 +10,8 @@ from .models import RegistrationToken, User
 from .serializers import (
     InitiateRegistrationSerializer,
     CompleteRegistrationSerializer,
-    UserSerializer
+    UserSerializer,
+    ProfileSerializer
 )
 
 from django.shortcuts import redirect
@@ -135,50 +136,25 @@ def list_users(request):
     return Response(serializer.data)
 
 
-# @api_view(['GET'])
-# @permission_classes([AllowAny])
-# def verify_token(request):
-#     """
-#     Vérifier si un token est valide.
-#     L'utilisateur accède à cette URL via le lien dans l'email.
-#     """
-#     token_value = request.query_params.get('token')
-    
-#     if not token_value:
-#         return Response({
-#             'error': 'Token manquant.'
-#         }, status=status.HTTP_400_BAD_REQUEST)
-    
-#     try:
-#         token = RegistrationToken.objects.get(token=token_value)
-        
-#         if token.is_valid():
-#             return Response({
-#                 'message': 'Token valide.',
-#                 'email': token.email
-#             }, status=status.HTTP_200_OK)
-#         else:
-#             return Response({
-#                 'error': 'Token expiré ou déjà utilisé.'
-#             }, status=status.HTTP_400_BAD_REQUEST)
-            
-#     except RegistrationToken.DoesNotExist:
-#         return Response({
-#             'error': 'Token invalide.'
-#         }, status=status.HTTP_404_NOT_FOUND)
-# # @api_view(['POST'])
-# @permission_classes([AllowAny])
-# def complete_registration(request):
-#     """
-#     Compléter l'inscription en fournissant tous les champs requis.
-#     """
-#     serializer = CompleteRegistrationSerializer(data=request.data)
-    
-#     if serializer.is_valid():
-#         user = serializer.save()
-#         return Response({
-#             'message': 'Inscription complétée avec succès.',
-#             'user': UserSerializer(user).data
-#         }, status=status.HTTP_201_CREATED)
-    
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def profile(request):
+    """
+    GET -> retourne les données du user connecté.
+    PUT/PATCH -> met à jour le profil (PATCH partiel recommandé).
+    Supporte upload d'image via multipart/form-data (champ 'photo').
+    """
+    user = request.user
+
+    if request.method == 'GET':
+        serializer = ProfileSerializer(user)
+        return Response(serializer.data)
+
+    # PUT ou PATCH
+    partial = (request.method == 'PATCH')
+    serializer = ProfileSerializer(user, data=request.data, partial=partial)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -16,4 +16,5 @@ urlpatterns = [
     
     # Liste des utilisateurs
     path('users/', views.list_users, name='list_users'),
+    path('profile/', views.profile, name='profile'),
 ]
