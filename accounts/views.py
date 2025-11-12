@@ -16,7 +16,7 @@ from .serializers import (
 
 from django.shortcuts import redirect
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError, AccessToken
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
@@ -174,6 +174,25 @@ def verify_refresh_token(request):
 
     try:
         RefreshToken(token)  # essaie de décoder et valider le token
+        return Response({"valid": True}, status=status.HTTP_200_OK)
+    except TokenError:
+        return Response({"valid": False}, status=status.HTTP_200_OK)
+    
+
+@api_view(['POST'])
+@permission_classes([])  # Pas besoin d’être authentifié
+def verify_access_token(request):
+    """
+    Vérifie si un access token JWT est encore valide.
+    Ne génère rien, ne rafraîchit rien.
+    """
+    token = request.data.get("access")
+
+    if not token:
+        return Response({"detail": "Access token manquant"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        AccessToken(token)  # Essaie de décoder et vérifier la validité du token
         return Response({"valid": True}, status=status.HTTP_200_OK)
     except TokenError:
         return Response({"valid": False}, status=status.HTTP_200_OK)
