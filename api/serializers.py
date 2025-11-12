@@ -99,7 +99,7 @@ class ChallengeListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Challenge
-        fields = ['id', 'title', 'slug', 'difficulty', 'test_cases_count', 'created_at', 'xp_reward']
+        fields = ['id', 'title', 'slug', 'difficulty', 'test_cases_count', 'created_at', 'xp_reward', 'participants_count']
     
     def get_test_cases_count(self, obj):
         return obj.test_cases.count()
@@ -115,7 +115,7 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'slug', 'difficulty', 
             'description', 'template', 'xp_reward', 
-            'test_cases', 'created_at', 'updated_at'
+            'test_cases', 'created_at', 'updated_at', 'participants_count'
         ]
 
     def get_description(self, obj):
