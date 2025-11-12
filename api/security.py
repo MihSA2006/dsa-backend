@@ -34,7 +34,7 @@ class SecurityChecker:
         r'\bcompile\s*\(',        # compile() - compilation de code
         r'\bopen\s*\(',           # open() - ouverture de fichiers
         r'\bfile\s*\(',           # file() - ancienne fonction fichier
-        r'\binput\s*\(',          # input() - attend entrée utilisateur (bloque)
+        # r'\binput\s*\(',          # input() - attend entrée utilisateur (bloque)
         r'\b__builtins__',        # Accès aux builtins
         r'\b__globals__',         # Accès aux variables globales
         r'\b__locals__',          # Accès aux variables locales
