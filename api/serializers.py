@@ -105,17 +105,21 @@ class ChallengeListSerializer(serializers.ModelSerializer):
         return obj.test_cases.count()
 
 
+
+
 class ChallengeDetailSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
     test_cases = TestCaseSerializer(many=True, read_only=True)
+    join = serializers.SerializerMethodField()  # 🆕 nouveau champ
 
     class Meta:
         model = Challenge
         fields = [
-            'id', 'title', 'slug', 'difficulty', 
-            'description', 'template', 'xp_reward', 
-            'test_cases', 'created_at', 'updated_at', 'participants_count'
+            'id', 'title', 'slug', 'difficulty',
+            'description', 'template', 'xp_reward',
+            'test_cases', 'created_at', 'updated_at',
+            'participants_count', 'join'  # 🆕 ajouté ici
         ]
 
     def get_description(self, obj):
@@ -123,6 +127,22 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
 
     def get_template(self, obj):
         return obj.get_template()
+
+    def get_join(self, obj):
+        """
+        Retourne True si l'utilisateur connecté a rejoint le challenge,
+        sinon False.
+        """
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+
+        from api.models import UserChallengeAttempt
+        return UserChallengeAttempt.objects.filter(
+            user=request.user,
+            challenge=obj
+        ).exists()
+
 
 
 class ChallengeCreateSerializer(serializers.ModelSerializer):

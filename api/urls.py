@@ -17,6 +17,7 @@ from .views import (
     my_challenges,
     test_challenge_solution,
 
+
     # Leaderboards
     challenge_leaderboard,
     global_leaderboard,

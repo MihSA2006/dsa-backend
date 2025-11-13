@@ -51,8 +51,9 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk=None):
         """Récupère le détail d'un challenge"""
         challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
-        serializer = ChallengeDetailSerializer(challenge)
+        serializer = ChallengeDetailSerializer(challenge, context={'request': request})  # 🆕 ajout du contexte
         return Response(serializer.data)
+
     
     def create(self, request):
         """Crée un nouveau challenge"""

@@ -60,6 +60,9 @@ def join_challenge(request, challenge_id):
     
 
 
+
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def test_challenge_solution(request, challenge_id):
@@ -277,110 +280,3 @@ def my_challenges(request):
 
 
 
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def submit_challenge_solution(request, challenge_id):
-#     """
-#     Soumet une solution pour un challenge
-#     L'utilisateur doit avoir rejoint le challenge au préalable
-    
-#     POST /api/challenges/{id}/submit/
-#     Body: {
-#         "code": "..."
-#     }
-#     """
-    
-#     # Vérifier que l'utilisateur a rejoint le challenge
-#     try:
-#         attempt = UserChallengeAttempt.objects.get(
-#             user=request.user,
-#             challenge_id=challenge_id
-#         )
-#     except UserChallengeAttempt.DoesNotExist:
-#         return Response(
-#             {'error': 'Vous devez d\'abord rejoindre ce challenge'},
-#             status=status.HTTP_403_FORBIDDEN
-#         )
-    
-#     # Récupérer le challenge
-#     try:
-#         challenge = Challenge.objects.get(id=challenge_id, is_active=True)
-#     except Challenge.DoesNotExist:
-#         return Response(
-#             {'error': 'Challenge introuvable'},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-    
-#     # Récupérer le code
-#     code = request.data.get('code')
-#     if not code:
-#         return Response(
-#             {'error': 'Le code est requis'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     # Vérifier la sécurité du code
-#     from api.security import SecurityChecker
-#     security_checker = SecurityChecker()
-#     is_safe, error_message = security_checker.check_code(code)
-    
-#     if not is_safe:
-#         return Response(
-#             {
-#                 'success': False,
-#                 'error': f'Sécurité : {error_message}'
-#             },
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     # Incrémenter le nombre de tentatives
-#     attempt.attempts_count += 1
-#     attempt.save()
-    
-#     # Récupérer tous les test cases
-#     test_cases = challenge.test_cases.all()
-    
-#     if not test_cases.exists():
-#         return Response(
-#             {'error': 'Ce challenge n\'a pas de test cases'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     # Préparer les test cases pour la validation
-#     test_data = []
-#     for tc in test_cases:
-#         test_data.append({
-#             'input_content': tc.get_input(),
-#             'expected_output': tc.get_output(),
-#             'order': tc.order
-#         })
-    
-#     # Valider le code
-#     try:
-#         from api.challenge_validator import ChallengeValidator
-#         validator = ChallengeValidator(timeout=10)
-#         result = validator.validate_submission(code, test_data)
-        
-#         # Si tous les tests passent, marquer comme complété
-#         if result['success'] and attempt.status != 'completed':
-#             attempt.mark_as_completed()
-            
-#             return Response({
-#                 **result,
-#                 'xp_earned': attempt.xp_earned,
-#                 'completion_time': attempt.completion_time,
-#                 'message': f'Félicitations ! Vous avez gagné {attempt.xp_earned} XP !'
-#             }, status=status.HTTP_200_OK)
-        
-#         return Response(result, status=status.HTTP_200_OK)
-    
-#     except Exception as e:
-#         logger.error(f"Erreur lors de la validation : {str(e)}")
-#         return Response(
-#             {
-#                 'success': False,
-#                 'error': f'Erreur serveur : {str(e)}'
-#             },
-#             status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#         )
