@@ -262,6 +262,88 @@ def submit_challenge_solution(request, challenge_id):
         return Response({'error': f'Erreur serveur : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def test_specific_test_case(request, challenge_id, test_case_id):
+    """
+    Teste la solution d'un utilisateur pour un test case spécifique d'un challenge.
+
+    POST /api/challenges/{challenge_id}/test-case/{test_case_id}/
+    Body:
+    {
+        "code": "..."
+    }
+    """
+    # Vérifier que l'utilisateur a rejoint le challenge
+    try:
+        UserChallengeAttempt.objects.get(user=request.user, challenge_id=challenge_id)
+    except UserChallengeAttempt.DoesNotExist:
+        return Response(
+            {'error': "Vous devez d'abord rejoindre ce challenge"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Vérifier que le challenge existe
+    try:
+        challenge = Challenge.objects.get(id=challenge_id, is_active=True)
+    except Challenge.DoesNotExist:
+        return Response(
+            {'error': 'Challenge introuvable'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Vérifier que le test case appartient bien à ce challenge
+    try:
+        test_case = challenge.test_cases.get(id=test_case_id)
+    except TestCase.DoesNotExist:
+        return Response(
+            {'error': "Test case introuvable pour ce challenge"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Vérifier le code envoyé
+    code = request.data.get('code')
+    if not code:
+        return Response({'error': 'Le code est requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Vérifier la sécurité du code
+    from api.security import SecurityChecker
+    security_checker = SecurityChecker()
+    is_safe, error_message = security_checker.check_code(code)
+
+    if not is_safe:
+        return Response(
+            {'success': False, 'error': f"Sécurité : {error_message}"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Exécuter uniquement ce test case
+    from api.challenge_validator import ChallengeValidator
+    validator = ChallengeValidator(timeout=10)
+    try:
+        result = validator.validate_submission(code, [{
+            'input_content': test_case.get_input(),
+            'expected_output': test_case.get_output(),
+            'order': test_case.order
+        }])
+
+        # Ajouter un message convivial
+        if result['success']:
+            result['message'] = "✅ Ce test case a réussi !"
+        else:
+            result['message'] = "❌ Échec sur ce test case. Vérifie ton code."
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Erreur lors du test du test case spécifique : {str(e)}")
+        return Response(
+            {'success': False, 'error': f"Erreur serveur : {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_challenges(request):

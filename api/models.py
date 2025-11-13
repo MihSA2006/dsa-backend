@@ -252,24 +252,3 @@ class UserChallengeAttempt(models.Model):
             # Mettre à jour les stats de l'utilisateur
             if hasattr(self.user, 'update_stats'):
                 self.user.update_stats()
-
-    
-    # def mark_as_completed(self):
-    #     """Marque la tentative comme complétée et calcule le temps"""
-    #     from django.utils import timezone
-        
-    #     if self.status != 'completed':
-    #         self.status = 'completed'
-    #         self.completed_at = timezone.now()
-            
-    #         # Calculer le temps de résolution
-    #         time_diff = self.completed_at - self.started_at
-    #         self.completion_time = int(time_diff.total_seconds())
-            
-    #         # Attribuer les XP
-    #         self.xp_earned = self.challenge.xp_reward
-            
-    #         self.save()
-            
-    #         # Mettre à jour les stats de l'utilisateur
-    #         self.user.update_stats()

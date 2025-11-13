@@ -16,6 +16,7 @@ from .views import (
     submit_challenge_solution,
     my_challenges,
     test_challenge_solution,
+    test_specific_test_case,
 
 
     # Leaderboards
@@ -43,6 +44,8 @@ urlpatterns = [
     # Actions sur les challenges
     path('challenges/<int:challenge_id>/join/', join_challenge, name='join-challenge'),
     path('challenges/<int:challenge_id>/test/', test_challenge_solution, name='test-challenge'),
+    path('challenges/<int:challenge_id>/test-case/<int:test_case_id>/',test_specific_test_case,name='test-specific-testcase'),
+
     path('challenges/<int:challenge_id>/submit/', submit_challenge_solution, name='submit-challenge'),
     path('challenges/my-challenges/', my_challenges, name='my-challenges'),
     
