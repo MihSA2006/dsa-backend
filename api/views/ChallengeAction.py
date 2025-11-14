@@ -11,6 +11,8 @@ from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import get_user_model
 from api.models import UserChallengeAttempt
 
+from django.shortcuts import get_object_or_404
+
 
 User = get_user_model()
 
@@ -447,5 +449,38 @@ def my_challenges(request):
     serializer = UserChallengeAttemptSerializer(attempts, many=True)
     return Response(serializer.data)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_code(request, challenge_id):
+    from api.models import UserCodeSave
+    
+    # Vérification du challenge
+    challenge = get_object_or_404(Challenge, id=challenge_id, is_active=True)
 
+    code = request.data.get('code')
+    if code is None:
+        return Response({
+            "success": False,
+            "message": "Le champ 'code' est requis."
+        }, status=400)
+
+    try:
+        save_obj, created = UserCodeSave.objects.update_or_create(
+            user=request.user,
+            challenge=challenge,
+            defaults={'code': code}
+        )
+
+        return Response({
+            "success": True,
+            "message": "Code sauvegardé avec succès" if created else "Code mis à jour avec succès",
+            "saved_at": save_obj.saved_at
+        }, status=200)
+
+    except Exception as e:
+        return Response({
+            "success": False,
+            "message": "Une erreur est survenue lors de la sauvegarde.",
+            "error": str(e)
+        }, status=500)
 

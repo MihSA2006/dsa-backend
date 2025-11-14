@@ -258,10 +258,6 @@ class UserChallengeAttempt(models.Model):
             if hasattr(self.user, 'update_stats'):
                 self.user.update_stats()
 
-
-
-
-
 class Team(models.Model):
     """
     Une équipe créée pour un challenge spécifique
@@ -362,3 +358,24 @@ class TeamInvitation(models.Model):
                 user=self.invited_user,
                 challenge=self.team.challenge
             )
+
+
+class UserCodeSave(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='saved_codes'
+    )
+    challenge = models.ForeignKey(
+        Challenge,
+        on_delete=models.CASCADE,
+        related_name='saved_codes'
+    )
+    code = models.TextField()
+    saved_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'challenge')  # 1 sauvegarde par pair user/challenge
+
+    def __str__(self):
+        return f"{self.user.username} — {self.challenge.title}"

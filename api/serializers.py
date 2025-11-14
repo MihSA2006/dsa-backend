@@ -105,6 +105,8 @@ class ChallengeListSerializer(serializers.ModelSerializer):
         return obj.test_cases.count()
 
 
+
+
 class ChallengeDetailSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
@@ -112,11 +114,8 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
     join = serializers.SerializerMethodField()
 
     # 🆕 nouveaux champs
-    status = serializers.SerializerMethodField()
-    started_at = serializers.SerializerMethodField()
-    completed_at = serializers.SerializerMethodField()
-    completion_time = serializers.SerializerMethodField()
-    xp_earned = serializers.SerializerMethodField()
+    saved_code = serializers.SerializerMethodField()
+    last_saved_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Challenge
@@ -125,10 +124,7 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
             'description', 'template', 'xp_reward',
             'test_cases', 'created_at', 'updated_at',
             'participants_count', 'join',
-
-            # 🆕 ajout ici
-            'status', 'started_at', 'completed_at',
-            'completion_time', 'xp_earned',
+            'saved_code', 'last_saved_at'  # 🆕 ajouté
         ]
 
     def get_description(self, obj):
@@ -144,35 +140,22 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         from api.models import UserChallengeAttempt
         return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).exists()
 
-    # 🆕 méthodes pour les informations utilisateur
-    def _get_attempt(self, obj):
-        """Récupère la tentative de l’utilisateur ou None"""
+    # 🔥 récupération du code sauvegardé
+    def get_saved_code(self, obj):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return None
-        from api.models import UserChallengeAttempt
-        return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).first()
+        from api.models import UserCodeSave
+        record = UserCodeSave.objects.filter(user=request.user, challenge=obj).first()
+        return record.code if record else obj.get_template()  # si aucun, retourner le template
 
-    def get_status(self, obj):
-        attempt = self._get_attempt(obj)
-        return attempt.status if attempt else None
-
-    def get_started_at(self, obj):
-        attempt = self._get_attempt(obj)
-        return attempt.started_at if attempt else None
-
-    def get_completed_at(self, obj):
-        attempt = self._get_attempt(obj)
-        return attempt.completed_at if attempt else None
-
-    def get_completion_time(self, obj):
-        attempt = self._get_attempt(obj)
-        return attempt.completion_time if attempt else None
-
-    def get_xp_earned(self, obj):
-        attempt = self._get_attempt(obj)
-        return attempt.xp_earned if attempt else None
-
+    def get_last_saved_at(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        from api.models import UserCodeSave
+        record = UserCodeSave.objects.filter(user=request.user, challenge=obj).first()
+        return record.saved_at if record else None
 
 
 
@@ -302,12 +285,18 @@ class GlobalLeaderboardSerializer(serializers.Serializer):
     challenges_completed = serializers.IntegerField()
 
 
-
 # class ChallengeDetailSerializer(serializers.ModelSerializer):
 #     description = serializers.SerializerMethodField()
 #     template = serializers.SerializerMethodField()
 #     test_cases = TestCaseSerializer(many=True, read_only=True)
-#     join = serializers.SerializerMethodField()  # 🆕 nouveau champ
+#     join = serializers.SerializerMethodField()
+
+#     # 🆕 nouveaux champs
+#     status = serializers.SerializerMethodField()
+#     started_at = serializers.SerializerMethodField()
+#     completed_at = serializers.SerializerMethodField()
+#     completion_time = serializers.SerializerMethodField()
+#     xp_earned = serializers.SerializerMethodField()
 
 #     class Meta:
 #         model = Challenge
@@ -315,7 +304,11 @@ class GlobalLeaderboardSerializer(serializers.Serializer):
 #             'id', 'title', 'slug', 'difficulty',
 #             'description', 'template', 'xp_reward',
 #             'test_cases', 'created_at', 'updated_at',
-#             'participants_count', 'join'  # 🆕 ajouté ici
+#             'participants_count', 'join',
+
+#             # 🆕 ajout ici
+#             'status', 'started_at', 'completed_at',
+#             'completion_time', 'xp_earned',
 #         ]
 
 #     def get_description(self, obj):
@@ -325,16 +318,37 @@ class GlobalLeaderboardSerializer(serializers.Serializer):
 #         return obj.get_template()
 
 #     def get_join(self, obj):
-#         """
-#         Retourne True si l'utilisateur connecté a rejoint le challenge,
-#         sinon False.
-#         """
 #         request = self.context.get('request')
-#         if not request or not request.user or not request.user.is_authenticated:
+#         if not request or not request.user.is_authenticated:
 #             return False
-
 #         from api.models import UserChallengeAttempt
-#         return UserChallengeAttempt.objects.filter(
-#             user=request.user,
-#             challenge=obj
-#         ).exists()
+#         return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).exists()
+
+#     # 🆕 méthodes pour les informations utilisateur
+#     def _get_attempt(self, obj):
+#         """Récupère la tentative de l’utilisateur ou None"""
+#         request = self.context.get('request')
+#         if not request or not request.user.is_authenticated:
+#             return None
+#         from api.models import UserChallengeAttempt
+#         return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).first()
+
+#     def get_status(self, obj):
+#         attempt = self._get_attempt(obj)
+#         return attempt.status if attempt else None
+
+#     def get_started_at(self, obj):
+#         attempt = self._get_attempt(obj)
+#         return attempt.started_at if attempt else None
+
+#     def get_completed_at(self, obj):
+#         attempt = self._get_attempt(obj)
+#         return attempt.completed_at if attempt else None
+
+#     def get_completion_time(self, obj):
+#         attempt = self._get_attempt(obj)
+#         return attempt.completion_time if attempt else None
+
+#     def get_xp_earned(self, obj):
+#         attempt = self._get_attempt(obj)
+#         return attempt.xp_earned if attempt else None
