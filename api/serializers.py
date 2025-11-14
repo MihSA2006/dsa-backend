@@ -105,13 +105,18 @@ class ChallengeListSerializer(serializers.ModelSerializer):
         return obj.test_cases.count()
 
 
-
-
 class ChallengeDetailSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
     test_cases = TestCaseSerializer(many=True, read_only=True)
-    join = serializers.SerializerMethodField()  # 🆕 nouveau champ
+    join = serializers.SerializerMethodField()
+
+    # 🆕 nouveaux champs
+    status = serializers.SerializerMethodField()
+    started_at = serializers.SerializerMethodField()
+    completed_at = serializers.SerializerMethodField()
+    completion_time = serializers.SerializerMethodField()
+    xp_earned = serializers.SerializerMethodField()
 
     class Meta:
         model = Challenge
@@ -119,7 +124,11 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'difficulty',
             'description', 'template', 'xp_reward',
             'test_cases', 'created_at', 'updated_at',
-            'participants_count', 'join'  # 🆕 ajouté ici
+            'participants_count', 'join',
+
+            # 🆕 ajout ici
+            'status', 'started_at', 'completed_at',
+            'completion_time', 'xp_earned',
         ]
 
     def get_description(self, obj):
@@ -129,19 +138,42 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         return obj.get_template()
 
     def get_join(self, obj):
-        """
-        Retourne True si l'utilisateur connecté a rejoint le challenge,
-        sinon False.
-        """
         request = self.context.get('request')
-        if not request or not request.user or not request.user.is_authenticated:
+        if not request or not request.user.is_authenticated:
             return False
-
         from api.models import UserChallengeAttempt
-        return UserChallengeAttempt.objects.filter(
-            user=request.user,
-            challenge=obj
-        ).exists()
+        return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).exists()
+
+    # 🆕 méthodes pour les informations utilisateur
+    def _get_attempt(self, obj):
+        """Récupère la tentative de l’utilisateur ou None"""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        from api.models import UserChallengeAttempt
+        return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).first()
+
+    def get_status(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.status if attempt else None
+
+    def get_started_at(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.started_at if attempt else None
+
+    def get_completed_at(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.completed_at if attempt else None
+
+    def get_completion_time(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.completion_time if attempt else None
+
+    def get_xp_earned(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.xp_earned if attempt else None
+
+
 
 
 
@@ -268,3 +300,41 @@ class GlobalLeaderboardSerializer(serializers.Serializer):
     total_xp = serializers.IntegerField()
     challenges_joined = serializers.IntegerField()
     challenges_completed = serializers.IntegerField()
+
+
+
+# class ChallengeDetailSerializer(serializers.ModelSerializer):
+#     description = serializers.SerializerMethodField()
+#     template = serializers.SerializerMethodField()
+#     test_cases = TestCaseSerializer(many=True, read_only=True)
+#     join = serializers.SerializerMethodField()  # 🆕 nouveau champ
+
+#     class Meta:
+#         model = Challenge
+#         fields = [
+#             'id', 'title', 'slug', 'difficulty',
+#             'description', 'template', 'xp_reward',
+#             'test_cases', 'created_at', 'updated_at',
+#             'participants_count', 'join'  # 🆕 ajouté ici
+#         ]
+
+#     def get_description(self, obj):
+#         return obj.get_description()
+
+#     def get_template(self, obj):
+#         return obj.get_template()
+
+#     def get_join(self, obj):
+#         """
+#         Retourne True si l'utilisateur connecté a rejoint le challenge,
+#         sinon False.
+#         """
+#         request = self.context.get('request')
+#         if not request or not request.user or not request.user.is_authenticated:
+#             return False
+
+#         from api.models import UserChallengeAttempt
+#         return UserChallengeAttempt.objects.filter(
+#             user=request.user,
+#             challenge=obj
+#         ).exists()

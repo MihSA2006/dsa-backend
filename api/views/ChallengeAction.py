@@ -48,14 +48,14 @@ def join_challenge(request, challenge_id):
         request.user.update_stats()
         
         return Response({
-            'message': 'Challenge rejoint avec succès',
-            'attempt': UserChallengeAttemptSerializer(attempt).data
+            'message': True,
+            # 'attempt': UserChallengeAttemptSerializer(attempt).data
         }, status=status.HTTP_201_CREATED)
     else:
         # L'utilisateur a déjà rejoint ce challenge
         return Response({
-            'message': 'Vous avez déjà rejoint ce challenge',
-            'attempt': UserChallengeAttemptSerializer(attempt).data
+            'message': False,
+            # 'attempt': UserChallengeAttemptSerializer(attempt).data
         }, status=status.HTTP_200_OK)
     
 
