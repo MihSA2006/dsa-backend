@@ -28,7 +28,7 @@ from .views import (
     # Leaderboards
     challenge_leaderboard,
     global_leaderboard,
-    my_global_stats,
+    my_stats,
 )
 
 app_name = 'api'
@@ -67,7 +67,7 @@ urlpatterns = [
     # Leaderboards
     path('challenges/<int:challenge_id>/leaderboard/', challenge_leaderboard, name='challenge-leaderboard'),
     path('leaderboard/global/', global_leaderboard, name='global-leaderboard'),
-    path('my-global-stats/', my_global_stats, name='my-stats'),
+    path('my-stats/', my_stats, name='my-stats'),
 
 
 

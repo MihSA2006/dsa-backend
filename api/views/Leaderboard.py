@@ -143,7 +143,7 @@ def global_leaderboard(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def my_global_stats(request):
+def my_stats(request):
     """
     Retourne les statistiques de l'utilisateur connecté
     
