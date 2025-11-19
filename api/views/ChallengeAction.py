@@ -302,7 +302,7 @@ def submit_challenge_solution(request, challenge_id):
             attempt.xp_earned = min(previous_xp + xp_diff, challenge.xp_reward)
 
         # Mise à jour du temps de complétion si l'utilisateur n'a pas encore le maximum d'XP
-        if attempt.xp_earned < challenge.xp_reward:
+        if attempt.completed_at is None:
             attempt.completed_at = timezone.now()
             time_diff = attempt.completed_at - attempt.started_at
             attempt.completion_time = int(time_diff.total_seconds())
