@@ -41,25 +41,21 @@ class User(AbstractUser):
         """Met à jour les statistiques de l'utilisateur"""
         from api.models import UserChallengeAttempt
         
-        # Compter les challenges rejoints (distincts)
+        # Nombre de challenges rejoints
         self.challenges_joined = UserChallengeAttempt.objects.filter(
             user=self
         ).values('challenge').distinct().count()
         
-        # Calculer le XP total (seulement des challenges complétés)
-        completed_attempts = UserChallengeAttempt.objects.filter(
-            user=self,
-            status='completed'
+        # XP total = somme de tous les XP validés (progressifs)
+        attempts = UserChallengeAttempt.objects.filter(
+            user=self
         ).select_related('challenge')
         
         self.total_xp = sum(
-            attempt.challenge.xp_reward 
-            for attempt in completed_attempts
+            attempt.xp_earned for attempt in attempts
         )
         
         self.save()
-
-
 class RegistrationToken(models.Model):
     """Modèle pour stocker les tokens d'inscription"""
     email = models.EmailField(unique=True)

@@ -94,7 +94,7 @@ def verify_token(request):
 
         if token.is_valid():
             # 🔁 Redirection vers le frontend avec le token
-            frontend_url = f"http://localhost:5173/register?token={token_value}"
+            frontend_url = f"http://localhost:3000/register?token={token_value}"
             return redirect(frontend_url)
         
         else:

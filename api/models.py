@@ -60,6 +60,30 @@ class Challenge(models.Model):
         verbose_name="Nombre de participants"
     )
     
+    xp_required = models.IntegerField(
+        default=0,
+        verbose_name="XP minimum requis pour valider la soumission"
+    )
+
+    # Description PDF optionnelle
+    description_pdf = models.FileField(
+        upload_to='challenges/descriptions/pdf/',
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
+        null=True,
+        blank=True,
+        verbose_name="Description en PDF"
+    )
+
+    # Image optionnelle
+    description_img = models.ImageField(
+        upload_to='challenges/descriptions/images/',
+        null=True,
+        blank=True,
+        verbose_name="Image de description"
+    )
+
+
+
     # Métadonnées
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

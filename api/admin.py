@@ -21,14 +21,15 @@ class ChallengeAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Informations de base', {
-            'fields': ('title', 'slug', 'difficulty', 'is_active', 'participants_count')
+            'fields': ('title', 'slug', 'difficulty', 'is_active', 'participants_count', 'xp_required')
         }),
         ('Récompense', {
             'fields': ('xp_reward',)
         }),
         ('Fichiers', {
-            'fields': ('description_file', 'template_file')
+            'fields': ('description_file', 'description_pdf', 'description_img', 'template_file')
         }),
+
     )
 
 
