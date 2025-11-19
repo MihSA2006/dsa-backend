@@ -20,3 +20,4 @@ urlpatterns = [
     path('token/verify-refresh/', views.verify_refresh_token, name='verify_refresh_token'),
     path('token/verify-access/', views.verify_access_token, name='verify_access_token'),
 ]
+

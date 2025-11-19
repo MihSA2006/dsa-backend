@@ -15,7 +15,7 @@ from .serializers import (
 )
 
 from django.shortcuts import redirect
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError, AccessToken
 
 @api_view(['POST'])
@@ -108,21 +108,19 @@ def verify_token(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@parser_classes([MultiPartParser, FormParser])
+@parser_classes([JSONParser, MultiPartParser, FormParser])
 def complete_registration(request):
-    """
-    Compléter l'inscription en fournissant tous les champs requis.
-    """
     serializer = CompleteRegistrationSerializer(data=request.data)
     
     if serializer.is_valid():
         user = serializer.save()
         return Response({
-            'message': 'Inscription complétée avec succès.',
+            'message': True,
             'user': UserSerializer(user).data
         }, status=status.HTTP_201_CREATED)
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'message':False}, serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 

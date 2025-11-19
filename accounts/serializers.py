@@ -14,15 +14,11 @@ class InitiateRegistrationSerializer(serializers.Serializer):
 
 
 class CompleteRegistrationSerializer(serializers.ModelSerializer):
-    """Serializer pour compléter l'inscription par l'utilisateur"""
-    password = serializers.CharField(
-        write_only=True, 
-        required=True, 
-        validators=[validate_password]
-    )
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True, required=True)
     token = serializers.UUIDField(write_only=True, required=True)
-    
+    photo = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = User
         fields = [
@@ -31,8 +27,9 @@ class CompleteRegistrationSerializer(serializers.ModelSerializer):
             'numero_inscription', 'parcours', 'classe'
         ]
         extra_kwargs = {
-            'email': {'read_only': True}  # Email déjà défini par le token
+            'email': {'read_only': True}
         }
+
     
     def validate(self, attrs):
         # Vérifier que les mots de passe correspondent
