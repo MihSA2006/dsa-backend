@@ -17,6 +17,9 @@ urlpatterns = [
     # Liste des utilisateurs
     path('users/', views.list_users, name='list_users'),
     path('profile/', views.profile, name='profile'),
+    path('is-admin/', views.is_admin, name='is_admin'),
+
+
     path('token/verify-refresh/', views.verify_refresh_token, name='verify_refresh_token'),
     path('token/verify-access/', views.verify_access_token, name='verify_access_token'),
 ]

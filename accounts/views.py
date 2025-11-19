@@ -157,6 +157,18 @@ def profile(request):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def is_admin(request):
+    """
+    Vérifie si l'utilisateur connecté est admin (superuser)
+    → retourne { "is_admin": true } ou { "is_admin": false }
+    """
+    user = request.user
+    return Response({
+        "is_admin": user.is_superuser  # True / False
+    })
+
 
 @api_view(['POST'])
 @permission_classes([])  # pas besoin d’être connecté
