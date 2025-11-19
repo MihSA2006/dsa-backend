@@ -8,7 +8,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ['username', 'email', 'nom', 'prenom', 'parcours', 'is_staff']
     fieldsets = BaseUserAdmin.fieldsets + (
         ('Informations supplémentaires', {
-            'fields': ('nom', 'prenom', 'photo', 'numero_inscription', 'parcours', 'filiere')
+            'fields': ('nom', 'prenom', 'photo', 'numero_inscription', 'parcours', 'classe')
         }),
     )
 

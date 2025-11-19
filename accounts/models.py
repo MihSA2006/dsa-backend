@@ -13,8 +13,26 @@ class User(AbstractUser):
     prenom = models.CharField(max_length=100)
     photo = models.ImageField(upload_to='photos/', null=True, blank=True)
     numero_inscription = models.CharField(max_length=50, unique=True)
-    parcours = models.CharField(max_length=100)
-    filiere = models.CharField(max_length=100, null=True, blank=True)
+
+    CLASSE_CHOICES = [
+        ("L1", "L1"),
+        ("L2", "L2"),
+        ("L3", "L3"),
+        ("M1", "M1"),
+        ("M2", "M2"),
+    ]
+    # classe = models.CharField(max_length=2, choices=CLASSE_CHOICES)
+
+    classe = models.CharField(max_length=2, choices=CLASSE_CHOICES, default='L1')
+    PARCOURS_CHOICES = [
+        ("Software Engineering", "Software Engineering"),
+        ("Artificial Intelligence", "Artificial Intelligence"),
+        ("Network Administration", "Network Administration"),
+        ("Common Core", "Common Core"),
+    ]
+    # parcours = models.CharField(max_length=50, choices=PARCOURS_CHOICES)
+    parcours = models.CharField(max_length=50, choices=PARCOURS_CHOICES, default='Common Core')
+
     
     # Champs supplémentaires utiles
     email = models.EmailField(unique=True)  # Rendre email unique

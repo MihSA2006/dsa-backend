@@ -28,7 +28,7 @@ class CompleteRegistrationSerializer(serializers.ModelSerializer):
         fields = [
             'token', 'nom', 'prenom', 'username', 'email',
             'password', 'password_confirm', 'photo',
-            'numero_inscription', 'parcours', 'filiere'
+            'numero_inscription', 'parcours', 'classe'
         ]
         extra_kwargs = {
             'email': {'read_only': True}  # Email déjà défini par le token
@@ -74,7 +74,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'nom', 'prenom', 'username', 'email',
-            'photo', 'numero_inscription', 'parcours', 'filiere',
+            'photo', 'numero_inscription', 'parcours', 'classe',
             'challenges_joined', 'total_xp'  # 🆕 NOUVEAUX CHAMPS
         ]
 
@@ -88,7 +88,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'nom', 'prenom', 'username', 'email', 'photo',
-            'numero_inscription', 'parcours', 'filiere',
+            'numero_inscription', 'parcours', 'classe',
             'challenges_joined', 'total_xp'
         ]
         read_only_fields = (
