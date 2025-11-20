@@ -12,7 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-ip6$b)xu*g_zxz&y%h#ob4lx&((k$je-!hrh-08=xtyi_e0a%#'
 
 
-DEBUG = True
+# DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -50,7 +51,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ BASE_DIR / "templates" ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -153,6 +154,8 @@ EMAIL_HOST_PASSWORD = 'yhfb qsss kzcu aewb'
 
 
 AUTH_USER_MODEL = 'accounts.User'
+
+HANDLER404 = 'accounts.views.custom_404_view'
 
 
 

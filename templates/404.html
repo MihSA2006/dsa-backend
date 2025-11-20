@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Page introuvable</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .stars {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    .container {
+      text-align: center;
+      z-index: 10;
+      position: relative;
+    }
+
+    .error-number {
+      font-size: 180px;
+      font-weight: 900;
+      color: white;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.5),
+                   0 0 40px rgba(255, 255, 255, 0.3);
+      animation: float 3s ease-in-out infinite;
+      margin-bottom: 20px;
+      line-height: 1;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .astronaut {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 30px;
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from {
+        transform: rotate(0deg) translateX(50px) rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg) translateX(50px) rotate(-360deg);
+      }
+    }
+
+    .astronaut-body {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      position: relative;
+      margin: 0 auto;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    }
+
+    .helmet {
+      width: 60px;
+      height: 60px;
+      background: rgba(102, 126, 234, 0.3);
+      border-radius: 50%;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      border: 3px solid white;
+    }
+
+    .message {
+      color: white;
+      margin-bottom: 15px;
+    }
+
+    .message h2 {
+      font-size: 42px;
+      margin-bottom: 10px;
+      animation: fadeInUp 1s ease-out;
+    }
+
+    .message p {
+      font-size: 20px;
+      opacity: 0.9;
+      animation: fadeInUp 1s ease-out 0.2s backwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 16px 40px;
+      background: white;
+      color: #667eea;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      animation: fadeInUp 1s ease-out 0.4s backwards;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      background: #f8f9ff;
+    }
+
+    .planet {
+      position: absolute;
+      border-radius: 50%;
+      animation: orbit 30s linear infinite;
+    }
+
+    .planet1 {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle at 30% 30%, #ffd700, #ff8c00);
+      top: 15%;
+      left: 10%;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+    }
+
+    .planet2 {
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle at 30% 30%, #ff6b9d, #c44569);
+      bottom: 20%;
+      right: 15%;
+      animation-duration: 25s;
+      animation-direction: reverse;
+      box-shadow: 0 0 30px rgba(255, 107, 157, 0.5);
+    }
+
+    @keyframes orbit {
+      from {
+        transform: rotate(0deg) translateX(30px) rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg) translateX(30px) rotate(-360deg);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .error-number {
+        font-size: 120px;
+      }
+      .message h2 {
+        font-size: 32px;
+      }
+      .message p {
+        font-size: 18px;
+      }
+      .astronaut {
+        width: 150px;
+        height: 150px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  
+  <div class="planet planet1"></div>
+  <div class="planet planet2"></div>
+
+  <div class="container">
+    <div class="astronaut">
+      <div class="astronaut-body">
+        <div class="helmet"></div>
+      </div>
+    </div>
+
+    <div class="error-number">404</div>
+    
+    <div class="message">
+      <h2>Houston, on a un problème !</h2>
+      <p>La page que vous recherchez s'est perdue dans l'espace.</p>
+    </div>
+  </div>
+
+  <script>
+    // Génération des étoiles
+    const starsContainer = document.getElementById('stars');
+    const numberOfStars = 100;
+
+    for (let i = 0; i < numberOfStars; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = Math.random() * 3 + 's';
+      star.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      starsContainer.appendChild(star);
+    }
+  </script>
+</body>
+</html>

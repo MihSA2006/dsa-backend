@@ -209,3 +209,21 @@ def verify_access_token(request):
         return Response({"valid": True}, status=status.HTTP_200_OK)
     except TokenError:
         return Response({"valid": False}, status=status.HTTP_200_OK)
+
+
+
+from django.shortcuts import render
+from django.http import JsonResponse
+
+
+def custom_404_view(request, exception=None):
+    return render(request, '404.html', status=404)
+
+
+
+def custom_404_api(request, exception=None):
+    return JsonResponse({
+        "status": 404,
+        "error": "URL not found",
+        "message": "La route demandée n'existe pas."
+    }, status=404)
