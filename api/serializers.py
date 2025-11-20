@@ -96,6 +96,7 @@ class ChallengeListSerializer(serializers.ModelSerializer):
     join = serializers.SerializerMethodField()    # 🆕
     status = serializers.SerializerMethodField()  # 🆕
 
+
     class Meta:
         model = Challenge
         fields = [
@@ -146,7 +147,11 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
     test_cases = TestCaseSerializer(many=True, read_only=True)
     join = serializers.SerializerMethodField()
 
-    # 🆕 nouveaux champs
+    # 🔥 nouveaux champs ajoutés
+    started_at = serializers.SerializerMethodField()
+    completed_at = serializers.SerializerMethodField()
+    completion_time = serializers.SerializerMethodField()
+
     saved_code = serializers.SerializerMethodField()
     last_saved_at = serializers.SerializerMethodField()
 
@@ -158,7 +163,10 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
             'description_pdf', 'description_img',
             'test_cases', 'created_at', 'updated_at',
             'participants_count', 'join',
-            'saved_code', 'last_saved_at', 
+            'saved_code', 'last_saved_at',
+
+            # 🆕 champs ajoutés
+            'started_at', 'completed_at', 'completion_time',
         ]
 
     def get_description(self, obj):
@@ -190,6 +198,29 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         from api.models import UserCodeSave
         record = UserCodeSave.objects.filter(user=request.user, challenge=obj).first()
         return record.saved_at if record else None
+
+    def _get_attempt(self, obj):
+        """Récupère la tentative de l'utilisateur pour éviter répéter le code"""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        from api.models import UserChallengeAttempt
+        return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).first()
+    
+    def get_started_at(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.started_at if attempt else None
+    
+    def get_completed_at(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.completed_at if attempt else None
+    
+    def get_completion_time(self, obj):
+        attempt = self._get_attempt(obj)
+        return attempt.completion_time if attempt else None
+
+
+
 
 
 
