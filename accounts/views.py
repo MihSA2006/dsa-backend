@@ -108,18 +108,21 @@ def verify_token(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@parser_classes([JSONParser, MultiPartParser, FormParser])
+@parser_classes([MultiPartParser, FormParser])
 def complete_registration(request):
     serializer = CompleteRegistrationSerializer(data=request.data)
-    
+
     if serializer.is_valid():
         user = serializer.save()
         return Response({
             'message': True,
             'user': UserSerializer(user).data
         }, status=status.HTTP_201_CREATED)
-    
-    return Response({'message':False}, serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({
+        'message': False,
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 
