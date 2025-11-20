@@ -1,6 +1,6 @@
 from pathlib import Path
 import os
-
+from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -9,11 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-SECRET_KEY = 'django-insecure-ip6$b)xu*g_zxz&y%h#ob4lx&((k$je-!hrh-08=xtyi_e0a%#'
+SECRET_KEY = config("SECRET_KEY")
 
 
-# DEBUG = True
-DEBUG = False
+DEBUG = True
+# DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -145,12 +145,12 @@ SIMPLE_JWT = {
 }
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'misandratra.harena3@gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_HOST_PASSWORD = 'yhfb qsss kzcu aewb'
+EMAIL_BACKEND = config("EMAIL_BACKEND")
+EMAIL_HOST = config("EMAIL_HOST")
+EMAIL_PORT = config("EMAIL_PORT")
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
 
 AUTH_USER_MODEL = 'accounts.User'
