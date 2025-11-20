@@ -42,11 +42,14 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         context['request'] = self.request
         return context
     
+
+    
     def list(self, request):
         """Liste tous les challenges"""
         challenges = self.get_queryset()
-        serializer = ChallengeListSerializer(challenges, many=True)
+        serializer = ChallengeListSerializer(challenges, many=True, context={'request': request})
         return Response(serializer.data)
+
     
     def retrieve(self, request, pk=None):
         """Récupère le détail d'un challenge"""

@@ -92,17 +92,50 @@ class TestCaseSerializer(serializers.ModelSerializer):
 
 
 class ChallengeListSerializer(serializers.ModelSerializer):
-    """
-    Serializer pour la liste des challenges (vue simplifiée)
-    """
     test_cases_count = serializers.SerializerMethodField()
-    
+    join = serializers.SerializerMethodField()    # 🆕
+    status = serializers.SerializerMethodField()  # 🆕
+
     class Meta:
         model = Challenge
-        fields = ['id', 'title', 'slug', 'difficulty', 'test_cases_count', 'created_at', 'xp_reward', 'participants_count']
-    
+        fields = [
+            'id', 'title', 'slug', 'difficulty',
+            'test_cases_count', 'created_at',
+            'xp_reward', 'participants_count',
+            'join', 'status'   # 🆕 ajoutés
+        ]
+
     def get_test_cases_count(self, obj):
         return obj.test_cases.count()
+
+    def get_join(self, obj):
+        """Retourne True si l'utilisateur a rejoint le challenge"""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        from api.models import UserChallengeAttempt
+        return UserChallengeAttempt.objects.filter(
+            user=request.user,
+            challenge=obj
+        ).exists()
+
+    def get_status(self, obj):
+        """
+        Retourne complete ou in_progress si l'utilisateur a rejoint le challenge
+        Sinon return None
+        """
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        from api.models import UserChallengeAttempt
+        attempt = UserChallengeAttempt.objects.filter(
+            user=request.user,
+            challenge=obj
+        ).first()
+        if not attempt:
+            return None
+        return "complete" if attempt.status == "completed" else "in_progress"
+
 
 
 
