@@ -6,6 +6,7 @@ djangorestframework_simplejwt==5.5.1
 pillow==12.0.0
 psutil==5.9.8
 PyJWT==2.10.1
+python-decouple==3.8
 pytz==2025.2
 sqlparse==0.5.3
 tzdata==2025.2

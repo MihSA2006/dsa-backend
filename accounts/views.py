@@ -18,6 +18,15 @@ from django.shortcuts import redirect
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError, AccessToken
 
+
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+
+
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
+
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def initiate_registration(request):
@@ -42,29 +51,23 @@ def initiate_registration(request):
         # Créer le lien d'inscription
         registration_link = f"http://localhost:8000/api/accounts/register/verify/?token={token.token}"
         
-        # Envoyer l'email
+        # Sujet de l'email
         subject = "Invitation à compléter votre inscription"
-        message = f"""
-        Bonjour,
-        
-        Vous avez été invité à créer un compte sur notre plateforme.
-        
-        Veuillez cliquer sur le lien suivant pour compléter votre inscription :
-        {registration_link}
-        
-        Ce lien est valide pendant 48 heures.
-        
-        Cordialement,
-        L'équipe
-        """
-        
-        send_mail(
+
+        # 🔹 Charger le template HTML et injecter le lien
+        html_content = render_to_string('mail.html', {
+            'registration_link': registration_link
+        })
+
+        # 🔹 Envoyer l'email au format HTML
+        email_message = EmailMultiAlternatives(
             subject,
-            message,
+            "",  # Version texte (facultatif)
             settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
-            [email],
-            fail_silently=False,
+            [email]
         )
+        email_message.attach_alternative(html_content, "text/html")
+        email_message.send()
         
         return Response({
             'message': 'Email d\'invitation envoyé avec succès.',
@@ -73,6 +76,9 @@ def initiate_registration(request):
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 
@@ -129,7 +135,7 @@ def complete_registration(request):
 
 
 @api_view(['GET'])
-# @permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def list_users(request):
     """Liste tous les utilisateurs (admin seulement)"""
     users = User.objects.all()

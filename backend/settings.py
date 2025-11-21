@@ -12,8 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 
-DEBUG = True
-# DEBUG = False
+# DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -82,8 +82,6 @@ DATABASES = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",      
     "http://127.0.0.1:3000",    
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -174,7 +172,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [ BASE_DIR / "static" ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 
 
