@@ -19,4 +19,9 @@ COPY . .
 EXPOSE 8888
 
 # Define the command to run the application
-CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8888", "backend.wsgi:application"]
+COPY entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+# CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8888", "backend.wsgi:application"]
