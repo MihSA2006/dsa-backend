@@ -9,7 +9,7 @@ COPY requirements.txt .
 
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install -r requirements.txt
 
 
 # Copy the Django application code
