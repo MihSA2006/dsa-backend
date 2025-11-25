@@ -78,18 +78,21 @@ DATABASES = {
     }
 }
 
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",      
-    "http://192.168.88.232:3000",    
-    "http://127.0.0.1:3000",    
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://192.168.88.232:3000",
     "https://bqjzgmxfxvsdknfogkpt.supabase.co",
     "http://dsa.insi.mg",
     "https://dsa.insi.mg",
-    "https://nextjs-1:3000",
     "http://nextjs-1:3000",
+    "https://nextjs-1:3000",
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
@@ -112,7 +115,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://dsa.insi.mg",
     "https://dsa.insi.mg",
     "http://nextjs-1:3000",
-    "http://nextjs-1:3000",
+    "https://nextjs-1:3000",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
