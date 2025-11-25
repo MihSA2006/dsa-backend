@@ -49,7 +49,7 @@ def initiate_registration(request):
         )
         
         # Créer le lien d'inscription
-        registration_link = f"http://localhost:8000/api/accounts/register/verify/?token={token.token}"
+        registration_link = f"http://dsa.insi.mg/api/accounts/register/verify/?token={token.token}"
         
         # Sujet de l'email
         subject = "Invitation à compléter votre inscription"
@@ -100,7 +100,7 @@ def verify_token(request):
 
         if token.is_valid():
             # 🔁 Redirection vers le frontend avec le token
-            frontend_url = f"http://localhost:3000/register?token={token_value}"
+            frontend_url = f"http://dsa.insi.mg/register?token={token_value}"
             return redirect(frontend_url)
         
         else:
