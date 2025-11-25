@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:15
+    volumes:
+      - ./data/database:/var/lib/postgresql/data
+      - ./backups/database:/backups
+    environment:
+      POSTGRES_DB: dsa_website
+      POSTGRES_USER: dsa_website
+      POSTGRES_PASSWORD: dsa_website_password
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  django:
+    build:
+      context: ./dsa-backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./data/media:/app/media
+      - ./data/staticfiles:/app/staticfiles
+    env_file:
+      - ./.env.production
+    environment:
+      - DATABASE_URL=postgresql://dsa_website:dsa_website_password@db:5432/dsa_website
+      - DEBUG=False
+      - DJANGO_SUPERUSER_USERNAME=dsa-admin
+      - DJANGO_SUPERUSER_EMAIL=dsa.insi.platform@gmail.com
+      - DJANGO_SUPERUSER_PASSWORD=admin-dsa-password
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  nextjs:
+    build:
+      context: ./dsa
+      dockerfile: Dockerfile
+    environment:
+      - API_URL=http://django:8888/api
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./data/staticfiles:/static
+      - ./data/media:/media
+    depends_on:
+      - django
+      - nextjs
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
