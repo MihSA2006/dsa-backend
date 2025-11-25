@@ -87,7 +87,7 @@ DATABASES = {
         'HOST': config("DB_HOST"),
         'PORT': config("DB_PORT"),
         'OPTIONS': {
-            'sslmode': 'require',  # obligatoire pour Railway
+            'sslmode': 'disable',  # obligatoire pour Railway
         },
     }
 }
@@ -95,6 +95,7 @@ DATABASES = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",      
+    "http://192.168.88.232:3000",    
     "http://127.0.0.1:3000",    
     "https://bqjzgmxfxvsdknfogkpt.supabase.co",
 ]
@@ -119,6 +120,7 @@ REST_FRAMEWORK = {
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://192.168.88.232:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
