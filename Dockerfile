@@ -13,5 +13,6 @@ EXPOSE 8888
 CMD ["sh", "-c", "\
     python manage.py migrate && \
     python manage.py shell < create_superuser.py && \
+    python manage.py collectstatic \
     gunicorn --workers 3 --bind 0.0.0.0:8888 backend.wsgi:application \
 "]
