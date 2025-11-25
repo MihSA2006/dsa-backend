@@ -4,21 +4,12 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-
-
-
-
 SECRET_KEY = config("SECRET_KEY")
-
 
 DEBUG = True
 # DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-
-
-
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,7 +37,6 @@ MIDDLEWARE = [
     'accounts.middleware.Force404Middleware'
 ]
 
-
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
@@ -67,10 +57,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
-
-
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.sqlite3',
@@ -87,21 +73,21 @@ DATABASES = {
         'HOST': config("DB_HOST"),
         'PORT': config("DB_PORT"),
         'OPTIONS': {
-            'sslmode': 'disable',  # obligatoire pour Railway
+            'sslmode': 'disable',
         },
     }
 }
-
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",      
     "http://192.168.88.232:3000",    
     "http://127.0.0.1:3000",    
     "https://bqjzgmxfxvsdknfogkpt.supabase.co",
+    "http://dsa.insi.mg",
+    "https://dsa.insi.mg",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
@@ -115,18 +101,15 @@ REST_FRAMEWORK = {
     ],
 }
 
-
-
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://192.168.88.232:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://dsa.insi.mg",
+    "https://dsa.insi.mg",
 ]
-
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -146,18 +129,14 @@ AUTH_PASSWORD_VALIDATORS = [
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    # Token d’accès valide pendant 3 jours
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
 
-    # Token de rafraîchissement valide pendant 7 jours (tu peux ajuster)
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 
-    # Options recommandées
-    'ROTATE_REFRESH_TOKENS': False,  # garder le même refresh
+    'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
-
 
 EMAIL_BACKEND = config("EMAIL_BACKEND")
 EMAIL_HOST = config("EMAIL_HOST")
@@ -166,13 +145,9 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 
-
 AUTH_USER_MODEL = 'accounts.User'
 
 HANDLER404 = 'accounts.views.custom_404_view'
-
-
-
 
 LANGUAGE_CODE = 'en-us'
 
@@ -185,15 +160,8 @@ USE_TZ = True
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-
-
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [ BASE_DIR / "static" ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-
-
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
