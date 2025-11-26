@@ -16,6 +16,6 @@ RUN chmod 755 static
 CMD ["sh", "-c", "\
     python manage.py migrate && \
     python manage.py shell < create_superuser.py && \
-    python manage.py collectstatic --noinput && \
+    python manage.py collectstatic --noinput --clear && \
     gunicorn --workers 3 --bind 0.0.0.0:8888 backend.wsgi:application \
 "]
