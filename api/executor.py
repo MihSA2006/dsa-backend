@@ -5,7 +5,7 @@ import shutil
 import time
 import sys
 from typing import Dict, Any
-
+import uuid
 # Import conditionnel de resource (seulement sur Linux/Mac)
 try:
     import resource
@@ -28,6 +28,12 @@ class CodeExecutor:
     MEMORY_LIMIT = 128 * 1024 * 1024
     
     def __init__(self, timeout: int = DEFAULT_TIMEOUT):
+
+        self.timeout = timeout
+        print(f"[INIT] CodeExecutor initialisé avec timeout={self.timeout}s")
+
+    
+    def __init__(self, timeout: int = DEFAULT_TIMEOUT, execution_id: str = None):
         """
         Initialise l'exécuteur de code
         
@@ -35,7 +41,8 @@ class CodeExecutor:
             timeout: Temps maximum d'exécution en secondes
         """
         self.timeout = timeout
-        print(f"[INIT] CodeExecutor initialisé avec timeout={self.timeout}s")
+        self.execution_id = execution_id or str(uuid.uuid4())
+        print(f"[INIT] CodeExecutor {self.execution_id} initialisé")
 
     def _set_limits(self):
         """
@@ -83,9 +90,13 @@ class CodeExecutor:
         try:
             print("[EXEC] Démarrage de l'exécution du code...")
             # 1. Créer un répertoire temporaire
-            temp_dir = tempfile.mkdtemp(prefix='code_exec_')
-            print(f"[EXEC] Répertoire temporaire créé : {temp_dir}")
-            script_path = os.path.join(temp_dir, 'script.py')
+            # temp_dir = tempfile.mkdtemp(prefix='code_exec_')
+            temp_dir = tempfile.mkdtemp(
+                prefix=f'code_exec_{self.execution_id}_'
+            )
+            print(f"[EXEC-{self.execution_id}] Répertoire : {temp_dir}")
+            # script_path = os.path.join(temp_dir, 'script.py')
+            script_path = os.path.join(temp_dir, f'script_{self.execution_id}.py')
             
             # 2. Écrire le code dans un fichier
             with open(script_path, 'w', encoding='utf-8') as f:

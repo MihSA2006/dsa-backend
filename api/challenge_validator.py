@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 from .executor import CodeExecutor
 import io
 import sys
-
+import uuid
 
 class ChallengeValidator:
     """
@@ -19,6 +19,7 @@ class ChallengeValidator:
             timeout: Temps maximum d'exécution par test case
         """
         self.timeout = timeout
+        self.validation_id = str(uuid.uuid4())
         self.executor = CodeExecutor(timeout=timeout)
     
     def validate_submission(
@@ -103,10 +104,16 @@ class ChallengeValidator:
         
         # Créer un code modifié qui utilise l'input fourni
         # On remplace les appels input() par des lectures depuis une liste
+        executor = CodeExecutor(
+            timeout=self.timeout,
+            execution_id=f"{self.validation_id}_{uuid.uuid4()}"
+        )
+        # modified_code = self._inject_input(code, input_data)
         modified_code = self._inject_input(code, input_data)
         
         # Exécuter le code modifié
-        return self.executor.execute(modified_code)
+        # return self.executor.execute(modified_code)
+        return executor.execute(modified_code)
     
     def _inject_input(self, code: str, input_data: str) -> str:
         """
