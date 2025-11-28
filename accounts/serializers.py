@@ -91,3 +91,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'email', 'challenges_joined', 'total_xp', 'numero_inscription', 'username'
         )
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'id', 'nom', 'prenom', 'username', 'email',
+            'photo', 'numero_inscription', 'parcours', 'classe',
+            'challenges_joined', 'total_xp'
+        ]

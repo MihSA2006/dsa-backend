@@ -19,6 +19,8 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('is-admin/', views.is_admin, name='is_admin'),
 
+    path('users/profiles/<int:user_id>/', views.get_user_profile_with_stats, name='get_users_profiles'),
+
 
     path('token/verify-refresh/', views.verify_refresh_token, name='verify_refresh_token'),
     path('token/verify-access/', views.verify_access_token, name='verify_access_token'),

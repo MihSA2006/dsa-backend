@@ -11,9 +11,11 @@ from .serializers import (
     InitiateRegistrationSerializer,
     CompleteRegistrationSerializer,
     UserSerializer,
-    ProfileSerializer
+    ProfileSerializer,
+    UserProfileSerializer
 )
 
+from api.models import UserChallengeAttempt
 from django.shortcuts import redirect
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError, AccessToken
@@ -177,6 +179,62 @@ def is_admin(request):
     return Response({
         "is_admin": user.is_superuser  # True / False
     })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_profile_with_stats(request, user_id):
+    """
+    Retourne le profil COMPLET d’un utilisateur avec :
+    - infos
+    - stats de challenges
+    - classement global
+    """
+    # Récupérer l’utilisateur
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "Utilisateur introuvable"}, status=404)
+
+    # Récupérer les tentatives
+    attempts = UserChallengeAttempt.objects.filter(user=user)
+    completed = attempts.filter(status='completed')
+
+    # Construction de la réponse
+    data = {
+        'user': {
+            'id': user.id,
+            'username': user.username,
+            'nom': user.nom,
+            'prenom': user.prenom,
+            'numero_inscription' : user.numero_inscription,
+            'classe': user.classe,
+            'parcours': user.parcours,
+            'email': user.email,
+            'total_xp': user.total_xp,
+            'challenges_joined': user.challenges_joined,
+            'photo': user.photo.url if user.photo else None
+        },
+        'challenges': {
+            # 'joined': attempts.count(),
+            'completed': completed.count(),
+            'in_progress': attempts.filter(status='in_progress').count(),
+            'completion_rate': round(
+                (completed.count() / attempts.count() * 100)
+                if attempts.count() > 0 else 0,
+                2
+            )
+        },
+        'ranking': {
+            'global_rank': User.objects.filter(
+                total_xp__gt=user.total_xp
+            ).count() + 1,
+            'total_users': User.objects.filter(total_xp__gt=0).count()
+        }
+    }
+
+    return Response(data)
+
+
 
 
 @api_view(['POST'])
