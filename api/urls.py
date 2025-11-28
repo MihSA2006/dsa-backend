@@ -19,11 +19,6 @@ from .views import (
     test_specific_test_case,
     save_code,
 
-    # Team
-    create_team,
-    accept_team_invitation,
-    team_detail,
-    team_submit_solution,
 
     # Leaderboards
     challenge_leaderboard,
@@ -54,14 +49,9 @@ urlpatterns = [
 
     path('challenges/<int:challenge_id>/submit/', submit_challenge_solution, name='submit-challenge'),
     path('challenges/my-challenges/', my_challenges, name='my-challenges'),
-    path('challenges/<int:challenge_id>/create-team/', create_team, name='create-team'),
+
 
     path('challenges/<int:challenge_id>/save-code/', save_code, name='save-code'),
-
-
-    path('team/<int:team_id>/', team_detail, name='team-detail'),
-    path('team/<int:team_id>/submit/', team_submit_solution, name='team-submit'),
-    path('team/invite/accept/<str:token>/', accept_team_invitation, name='accept-team-invite'),
 
     
     # Leaderboards

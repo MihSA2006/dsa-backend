@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 
-from api.models import Challenge, TestCase, TeamInvitation, Team
+from api.models import Challenge, TestCase
 from api.serializers import (
     UserChallengeAttemptSerializer
 )
@@ -340,97 +340,6 @@ def submit_challenge_solution(request, challenge_id):
     except Exception as e:
         # En cas d'erreur interne pendant l'exécution
         logger.error(f"Erreur lors de la validation : {str(e)}")
-        return Response({'error': f'Erreur serveur : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def team_submit_solution(request, team_id):
-    """
-    Un membre soumet une solution pour l'équipe.
-    Si un membre soumet, le challenge est terminé pour toute l'équipe.
-    """
-    from django.utils import timezone
-    from api.security import SecurityChecker
-    from api.challenge_validator import ChallengeValidator
-
-    try:
-        team = Team.objects.select_related('challenge').prefetch_related('members').get(id=team_id)
-    except Team.DoesNotExist:
-        return Response({'error': 'Équipe introuvable'}, status=status.HTTP_404_NOT_FOUND)
-
-    challenge = team.challenge
-
-    # Vérifier si le challenge est déjà terminé pour l’équipe
-    if team.is_completed:
-        return Response({'error': 'Cette équipe a déjà terminé le challenge.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Vérifier que le user fait bien partie de l’équipe
-    if request.user not in team.members.all():
-        return Response({'error': 'Vous ne faites pas partie de cette équipe.'}, status=status.HTTP_403_FORBIDDEN)
-
-    # Récupérer le code soumis
-    try:
-        code = get_code(request)
-    except ValueError as e:
-        return Response({'error': str(e)}, status=400)
-
-
-    # Vérifier la sécurité du code
-    security_checker = SecurityChecker()
-    is_safe, error_message = security_checker.check_code(code)
-    if not is_safe:
-        return Response({'error': f'Sécurité : {error_message}'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Récupérer les test cases du challenge
-    test_cases = challenge.test_cases.all()
-    if not test_cases.exists():
-        return Response({'error': 'Ce challenge n’a pas de test cases.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    test_data = [{
-        'input_content': tc.get_input(),
-        'expected_output': tc.get_output(),
-        'order': tc.order
-    } for tc in test_cases]
-
-    # Valider la solution
-    try:
-        validator = ChallengeValidator(timeout=10)
-        result = validator.validate_submission(code, test_data)
-
-        total_tests = len(test_data)
-        passed_tests = result.get('passed', 0)
-        failed_tests = result.get('failed', 0)
-        success_rate = passed_tests / total_tests if total_tests > 0 else 0
-
-        xp_gained = int(challenge.xp_reward * success_rate)
-
-        # Temps de complétion (celui du membre qui a soumis)
-        completion_time = int((timezone.now() - timezone.now()).total_seconds())  # (tu peux ajuster si tu stockes started_at)
-
-        # Marquer l’équipe comme terminée
-        team.mark_as_completed(xp_earned=xp_gained, completion_time=completion_time)
-
-        message = (
-            f"Challenge terminé pour l’équipe '{team.name}'. "
-            f"Tests réussis : {passed_tests}/{total_tests}. "
-            f"XP gagnée : {xp_gained}/{challenge.xp_reward}."
-        )
-
-        return Response({
-            'success': True,
-            'passed': passed_tests,
-            'failed': failed_tests,
-            'xp_earned_per_member': xp_gained,
-            'xp_total': challenge.xp_reward,
-            'completion_time': completion_time,
-            'message': message
-        }, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        logger.error(f"Erreur de soumission équipe : {str(e)}")
         return Response({'error': f'Erreur serveur : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
