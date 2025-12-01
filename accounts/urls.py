@@ -24,5 +24,9 @@ urlpatterns = [
 
     path('token/verify-refresh/', views.verify_refresh_token, name='verify_refresh_token'),
     path('token/verify-access/', views.verify_access_token, name='verify_access_token'),
+
+    path('password-reset/initiate/', views.initiate_password_reset, name='initiate_password_reset'),
+    path('password-reset/verify/', views.verify_reset_token, name='verify_reset_token'),
+    path('password-reset/complete/', views.complete_password_reset, name='complete_password_reset'),
 ]
 

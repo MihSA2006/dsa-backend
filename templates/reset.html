@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reset Password DSA Platform - INSI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+      body {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      
+      .invitation-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        overflow: hidden;
+      }
+      
+      .header-section {
+        background: linear-gradient(135deg, #1a1d35 0%, #2d3250 100%);
+        color: white;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+      }
+      
+      .header-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 178, 36, 0.1) 0%, transparent 70%);
+        animation: pulse 3s ease-in-out infinite;
+      }
+      
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+      
+      .logo-container {
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .logo-img {
+        max-width: 250px;
+        height: auto;
+        /* filter: brightness(0) invert(1); */
+      }
+      
+      .content-section {
+        padding: 40px;
+      }
+      
+      .accent-line {
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, #0d6efd 0%, #ffb224 100%);
+        margin: 20px auto;
+        border-radius: 2px;
+      }
+      
+      .feature-box {
+        background: #f8f9fa;
+        border-left: 4px solid #0d6efd;
+        padding: 15px 20px;
+        margin: 15px 0;
+        border-radius: 8px;
+        transition: transform 0.3s ease;
+      }
+      
+      .feature-box:hover {
+        transform: translateX(5px);
+      }
+      
+      .feature-icon {
+        color: #ffb224;
+        font-size: 24px;
+        margin-right: 10px;
+      }
+      
+      .btn-join {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        border: none;
+        color: white;
+        padding: 15px 40px;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 50px;
+        box-shadow: 0 5px 20px rgba(13, 110, 253, 0.3);
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      
+      .btn-join:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(13, 110, 253, 0.4);
+        background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+      }
+      
+      .footer-section {
+        background: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+        font-size: 14px;
+      }
+      
+      .highlight {
+        color: #0d6efd;
+        font-weight: 600;
+      }
+      
+      .network-icon {
+        position: absolute;
+        color: #ffb224;
+        opacity: 0.2;
+        font-size: 100px;
+      }
+      
+      .icon-1 {
+        top: 10px;
+        left: 10px;
+      }
+      .icon-2 {
+        bottom: 10px;
+        right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="invitation-card">
+      <div class="header-section">
+        <div class="network-icon icon-1">⬡</div>
+        <div class="network-icon icon-2">⬡</div>
+        <div class="logo-container">
+          <h1 style="font-size: 3rem; font-weight: bold; margin: 0; position: relative; z-index: 1;"><span style="color: #0d6efd;">D</span>SA</h1>
+          <p style="margin: 10px 0 0 0; font-size: 1.1rem; position: relative; z-index: 1;">Data Structure and Algorithms</p>
+        </div>
+        <h2 style="font-size: 1.5rem; margin-top: 20px; position: relative; z-index: 1;">Password Reset Request</h2>
+      </div>
+
+      <div class="content-section">
+        <div class="accent-line"></div>
+
+        <h3 class="text-center mb-4">Reset Your Password</h3>
+
+        <p class="lead text-center mb-4">
+          You requested to reset your password for the <br />
+          <span class="highlight">Institut National Supérieur d'Informatique (INSI)</span><br />
+          DSA Platform.
+        </p>
+
+        <p class="mb-4">If you initiated this request, click the button below to create a new password. This link is secure and valid for a limited time.</p>
+
+        <div class="text-center mt-3 mb-3">
+          <a href="{{ reset_link }}"><button class="btn-join">Reset Password</button></a>
+        </div>
+
+        <p class="text-center text-muted small">If you did not request a password reset, you can safely ignore this message. Your account will remain secure.</p>
+      </div>
+
+      <div class="footer-section">
+        <p style="margin: 0;">
+          <strong>Institut National Supérieur d'Informatique</strong><br />
+          DSA Platform - Building Tomorrow's Developers
+        </p>
+        <p style="margin-top: 10px; font-size: 12px;">© 2025 INSI - All rights reserved</p>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

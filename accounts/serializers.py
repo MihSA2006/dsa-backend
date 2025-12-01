@@ -100,3 +100,37 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'photo', 'numero_inscription', 'parcours', 'classe',
             'challenges_joined', 'total_xp'
         ]
+from django.contrib.auth.password_validation import validate_password
+from rest_framework import serializers
+
+class InitiatePasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    
+    def validate_email(self, value):
+        # Vérifier que l'utilisateur existe
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Aucun utilisateur avec cet email.")
+        return value
+
+
+class CompletePasswordResetSerializer(serializers.Serializer):
+    token = serializers.UUIDField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True)
+    
+    def validate(self, data):
+        # Vérifier que les mots de passe correspondent
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({
+                "confirm_password": "Les mots de passe ne correspondent pas."
+            })
+        
+        # Valider le mot de passe selon les règles Django
+        try:
+            validate_password(data['new_password'])
+        except Exception as e:
+            raise serializers.ValidationError({
+                "new_password": list(e.messages)
+            })
+        
+        return data
