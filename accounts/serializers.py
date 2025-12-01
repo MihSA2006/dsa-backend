@@ -134,3 +134,60 @@ class CompletePasswordResetSerializer(serializers.Serializer):
             })
         
         return data
+
+class EditProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer pour l'édition du profil utilisateur.
+    Permet uniquement de modifier : nom, prenom, photo, numero_inscription, classe, parcours
+    """
+    
+    class Meta:
+        model = User
+        fields = ['nom', 'prenom', 'photo', 'numero_inscription', 'classe', 'parcours']
+        extra_kwargs = {
+            'nom': {'required': False},
+            'prenom': {'required': False},
+            'photo': {'required': False},
+            'numero_inscription': {'required': False},
+            'classe': {'required': False},
+            'parcours': {'required': False},
+        }
+    
+    def validate_numero_inscription(self, value):
+        """
+        Vérifier que le numéro d'inscription n'est pas déjà utilisé par un autre utilisateur
+        """
+        user = self.instance  # L'utilisateur actuel
+        if User.objects.filter(numero_inscription=value).exclude(id=user.id).exists():
+            raise serializers.ValidationError("Ce numéro d'inscription est déjà utilisé.")
+        return value
+    
+    def validate_classe(self, value):
+        """
+        Vérifier que la classe est dans les choix autorisés
+        """
+        valid_classes = [choice[0] for choice in User.CLASSE_CHOICES]
+        if value not in valid_classes:
+            raise serializers.ValidationError(f"Classe invalide. Choix possibles : {', '.join(valid_classes)}")
+        return value
+    
+    def validate_parcours(self, value):
+        """
+        Vérifier que le parcours est dans les choix autorisés
+        """
+        valid_parcours = [choice[0] for choice in User.PARCOURS_CHOICES]
+        if value not in valid_parcours:
+            raise serializers.ValidationError(f"Parcours invalide. Choix possibles : {', '.join(valid_parcours)}")
+        return value
+    
+    def to_representation(self, instance):
+        """
+        Personnaliser la réponse pour inclure l'URL complète de la photo
+        """
+        data = super().to_representation(instance)
+        if instance.photo:
+            data['photo'] = instance.photo.url
+        return data
+    
+
+    

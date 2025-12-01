@@ -14,7 +14,8 @@ from .serializers import (
     ProfileSerializer,
     UserProfileSerializer,
     CompletePasswordResetSerializer,
-    InitiatePasswordResetSerializer
+    InitiatePasswordResetSerializer,
+    EditProfileSerializer
 )
 
 from api.models import UserChallengeAttempt
@@ -429,3 +430,42 @@ def custom_404_api(request, exception=None):
         "error": "URL not found",
         "message": "La route demandée n'existe pas."
     }, status=404)
+
+
+@api_view(['PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
+def edit_profile(request):
+    """
+    Permet à un utilisateur connecté de modifier son profil.
+    
+    Champs modifiables : nom, prenom, photo, numero_inscription, classe, parcours
+    
+    PUT : Mise à jour complète (tous les champs requis)
+    PATCH : Mise à jour partielle (seulement les champs envoyés)
+    
+    Support multipart/form-data pour l'upload de photo
+    """
+    user = request.user
+    
+    # PATCH pour mise à jour partielle, PUT pour complète
+    partial = (request.method == 'PATCH')
+    
+    serializer = EditProfileSerializer(
+        user, 
+        data=request.data, 
+        partial=partial
+    )
+    
+    if serializer.is_valid():
+        serializer.save()
+        
+        return Response({
+            'message': 'Profil mis à jour avec succès.',
+            'user': serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    return Response({
+        'message': 'Erreur lors de la mise à jour du profil.',
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
