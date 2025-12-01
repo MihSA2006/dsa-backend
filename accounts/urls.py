@@ -7,7 +7,7 @@ app_name = 'accounts'
 urlpatterns = [
     # Inscription
     path('register/initiate/', views.initiate_registration, name='initiate_registration'),
-    path('register/verify/', views.verify_token, name='verify_token'),
+    path('verify-back/register/', views.verify_token, name='verify_token'),
     path('register/complete/', views.complete_registration, name='complete_registration'),
     
     # Connexion (JWT)
@@ -26,7 +26,7 @@ urlpatterns = [
     path('token/verify-access/', views.verify_access_token, name='verify_access_token'),
 
     path('password-reset/initiate/', views.initiate_password_reset, name='initiate_password_reset'),
-    path('password-reset/verify/', views.verify_reset_token, name='verify_reset_token'),
+    path('verify-back/password-reset/', views.verify_reset_token, name='verify_reset_token'),
     path('password-reset/complete/', views.complete_password_reset, name='complete_password_reset'),
 ]
 

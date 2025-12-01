@@ -53,7 +53,7 @@ def initiate_registration(request):
         )
         
         # Créer le lien d'inscription
-        registration_link = f"http://dsa.insi.mg/api/accounts/register/verify/?token={token.token}"
+        registration_link = f"http://dsa.insi.mg/api/accounts/verify-back/register/?token={token.token}"
         
         # Sujet de l'email
         subject = "Invitation à compléter votre inscription"
@@ -107,7 +107,7 @@ def initiate_password_reset(request):
         )
         
         # Créer le lien de réinitialisation
-        reset_link = f"http://dsa.insi.mg/api/accounts/password-reset/verify/?token={token.token}"
+        reset_link = f"http://dsa.insi.mg/api/accounts/verify-back/password-reset/?token={token.token}"
         
         # Sujet de l'email
         subject = "Réinitialisation de votre mot de passe"
