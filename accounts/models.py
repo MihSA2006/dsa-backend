@@ -93,3 +93,15 @@ class RegistrationToken(models.Model):
         """Vérifier si le token est encore valide"""
         from django.utils import timezone
         return not self.is_used and self.expires_at > timezone.now()
+class PasswordResetToken(models.Model):
+    email = models.EmailField()
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    def is_valid(self):
+        from django.utils import timezone
+        return not self.used and timezone.now() < self.expires_at
+    
+    def __str__(self):
+        return f"Reset token pour {self.email}"

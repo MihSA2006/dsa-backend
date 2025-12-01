@@ -12,7 +12,9 @@ from .serializers import (
     CompleteRegistrationSerializer,
     UserSerializer,
     ProfileSerializer,
-    UserProfileSerializer
+    UserProfileSerializer,
+    CompletePasswordResetSerializer,
+    InitiatePasswordResetSerializer
 )
 
 from api.models import UserChallengeAttempt
@@ -79,6 +81,142 @@ def initiate_registration(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+from .models import PasswordResetToken
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def initiate_password_reset(request):
+    """
+    L'admin initie la réinitialisation du mot de passe.
+    Envoie un email avec un token à l'utilisateur.
+    """
+    serializer = InitiatePasswordResetSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        
+        # Supprimer les anciens tokens non utilisés pour cet email
+        PasswordResetToken.objects.filter(email=email, used=False).delete()
+        
+        # Créer un nouveau token
+        token = PasswordResetToken.objects.create(
+            email=email,
+            expires_at=timezone.now() + timedelta(hours=48)
+        )
+        
+        # Créer le lien de réinitialisation
+        reset_link = f"http://dsa.insi.mg/api/accounts/password-reset/verify/?token={token.token}"
+        
+        # Sujet de l'email
+        subject = "Réinitialisation de votre mot de passe"
+        
+        # Charger le template HTML
+        html_content = render_to_string('reset.html', {
+            'reset_link': reset_link
+        })
+        
+        # Envoyer l'email
+        email_message = EmailMultiAlternatives(
+            subject,
+            "",  # Version texte (facultatif)
+            settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
+            [email]
+        )
+        email_message.attach_alternative(html_content, "text/html")
+        email_message.send()
+        
+        return Response({
+            'message': 'Email de réinitialisation envoyé avec succès.',
+            'email': email,
+            'token': str(token.token)  # Pour tests avec Postman
+        }, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def verify_reset_token(request):
+    """
+    Vérifie si le token de réinitialisation est valide.
+    Si valide → redirige vers le frontend avec le token.
+    """
+    token_value = request.query_params.get('token')
+    
+    if not token_value:
+        return Response({'error': 'Token manquant.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        token = PasswordResetToken.objects.get(token=token_value)
+        
+        if token.is_valid():
+            # Redirection vers le frontend avec le token
+            frontend_url = f"http://dsa.insi.mg/reset-password?token={token_value}"
+            return redirect(frontend_url)
+        else:
+            return Response({
+                'error': 'Token expiré ou déjà utilisé.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+    
+    except PasswordResetToken.DoesNotExist:
+        return Response({'error': 'Token invalide.'}, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def complete_password_reset(request):
+    """
+    L'utilisateur envoie le nouveau mot de passe avec le token.
+    """
+    serializer = CompletePasswordResetSerializer(data=request.data)
+    
+    if serializer.is_valid():
+        token_value = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+        
+        try:
+            token = PasswordResetToken.objects.get(token=token_value)
+            
+            if not token.is_valid():
+                return Response({
+                    'message': False,
+                    'error': 'Token expiré ou déjà utilisé.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Récupérer l'utilisateur
+            user = User.objects.get(email=token.email)
+            
+            # Changer le mot de passe
+            user.set_password(new_password)
+            user.save()
+            
+            # Marquer le token comme utilisé
+            token.used = True
+            token.save()
+            
+            return Response({
+                'message': True,
+                'detail': 'Mot de passe réinitialisé avec succès.'
+            }, status=status.HTTP_200_OK)
+        
+        except PasswordResetToken.DoesNotExist:
+            return Response({
+                'message': False,
+                'error': 'Token invalide.'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        except User.DoesNotExist:
+            return Response({
+                'message': False,
+                'error': 'Utilisateur introuvable.'
+            }, status=status.HTTP_404_NOT_FOUND)
+    
+    return Response({
+        'message': False,
+        'errors': serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 
