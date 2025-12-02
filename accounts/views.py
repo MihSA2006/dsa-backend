@@ -114,7 +114,7 @@ def verify_token(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-@parser_classes([MultiPartParser, FormParser])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 def complete_registration(request):
     serializer = CompleteRegistrationSerializer(data=request.data)
 

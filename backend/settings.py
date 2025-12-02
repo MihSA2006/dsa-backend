@@ -100,6 +100,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://dsa.insi.mg",
     "http://nextjs-1:3000",
     "https://nextjs-1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 

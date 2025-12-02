@@ -97,17 +97,39 @@ class Contest(models.Model):
         else:
             self.statut = 'finished'
     
+    # def has_started(self):
+    #     """Vérifie si le contest a commencé"""
+    #     return timezone.now() >= self.date_debut
+
     def has_started(self):
-        """Vérifie si le contest a commencé"""
+        if not self.date_debut:
+            return False
         return timezone.now() >= self.date_debut
+
     
+    # def is_ongoing(self):
+    #     """Vérifie si le contest est en cours"""
+    #     now = timezone.now()
+    #     return self.date_debut <= now <= self.date_fin
+    
+
     def is_ongoing(self):
-        """Vérifie si le contest est en cours"""
+        if not self.date_debut or not self.date_fin:
+            return False
         now = timezone.now()
         return self.date_debut <= now <= self.date_fin
+
+
+
+
     
+    # def is_finished(self):
+    #     """Vérifie si le contest est terminé"""
+    #     return timezone.now() > self.date_fin
+
     def is_finished(self):
-        """Vérifie si le contest est terminé"""
+        if not self.date_fin:
+            return False
         return timezone.now() > self.date_fin
     
     def can_add_challenges(self):
