@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
-from .models import Contest, Team, ContestSubmission
+from .models import Contest, Team, ContestSubmission, TeamInvitation
 from accounts.models import User
 from api.models import Challenge
 
@@ -104,6 +104,27 @@ class TeamListSerializer(serializers.ModelSerializer):
             return teams.index(obj) + 1
         except ValueError:
             return None
+        
+
+class TeamInvitationSerializer(serializers.ModelSerializer):
+    inviter_name = serializers.CharField(source='inviter.username', read_only=True)
+    invitee_name = serializers.CharField(source='invitee.username', read_only=True)
+    team_name = serializers.CharField(source='team.nom', read_only=True)
+    contest_name = serializers.CharField(source='team.contest.title', read_only=True)
+    is_valid = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TeamInvitation
+        fields = [
+            'id', 'team', 'team_name', 'contest_name',
+            'inviter', 'inviter_name', 'invitee', 'invitee_name',
+            'status', 'created_at', 'expires_at', 'responded_at',
+            'is_valid'
+        ]
+        read_only_fields = ['token', 'status', 'responded_at']
+    
+    def get_is_valid(self, obj):
+        return obj.is_valid()
 
 
 class TeamDetailSerializer(serializers.ModelSerializer):

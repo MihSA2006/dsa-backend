@@ -9,13 +9,13 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = True
 # DEBUG = False
 
-if os.environ.get('DOCKER_CONTAINER', False):
-    # Forcer le service des fichiers statiques en Docker
-    import mimetypes
-    mimetypes.add_type("text/css", ".css", True)
+# if os.environ.get('DOCKER_CONTAINER', False):
+#     # Forcer le service des fichiers statiques en Docker
+#     import mimetypes
+#     mimetypes.add_type("text/css", ".css", True)
     
-    # Ou utilisez whitenoise pour servir les static files
-    INSTALLED_APPS = ['whitenoise.runserver_nostatic'] + INSTALLED_APPS
+#     # Ou utilisez whitenoise pour servir les static files
+#     INSTALLED_APPS = ['whitenoise.runserver_nostatic'] + INSTALLED_APPS
 
 ALLOWED_HOSTS = ['*']
 

@@ -96,10 +96,6 @@ class Contest(models.Model):
             self.statut = 'ongoing'
         else:
             self.statut = 'finished'
-    
-    # def has_started(self):
-    #     """Vérifie si le contest a commencé"""
-    #     return timezone.now() >= self.date_debut
 
     def has_started(self):
         if not self.date_debut:
@@ -107,25 +103,12 @@ class Contest(models.Model):
         return timezone.now() >= self.date_debut
 
     
-    # def is_ongoing(self):
-    #     """Vérifie si le contest est en cours"""
-    #     now = timezone.now()
-    #     return self.date_debut <= now <= self.date_fin
-    
 
     def is_ongoing(self):
         if not self.date_debut or not self.date_fin:
             return False
         now = timezone.now()
         return self.date_debut <= now <= self.date_fin
-
-
-
-
-    
-    # def is_finished(self):
-    #     """Vérifie si le contest est terminé"""
-    #     return timezone.now() > self.date_fin
 
     def is_finished(self):
         if not self.date_fin:
@@ -281,6 +264,105 @@ class Team(models.Model):
         self.xp_total = sum(sub.xp_earned for sub in submissions)
         self.temps_total = sum(sub.temps_soumission for sub in submissions)
         self.save(update_fields=['xp_total', 'temps_total'])
+
+class TeamInvitation(models.Model):
+    """
+    Modèle pour les invitations d'équipe
+    """
+    STATUS_CHOICES = [
+        ('pending', 'En attente'),
+        ('accepted', 'Acceptée'),
+        ('declined', 'Refusée'),
+        ('expired', 'Expirée'),
+    ]
+    
+    team = models.ForeignKey(
+        Team,
+        on_delete=models.CASCADE,
+        related_name='invitations',
+        verbose_name="Équipe"
+    )
+    inviter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_invitations',
+        verbose_name="Invité par"
+    )
+    invitee = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_invitations',
+        verbose_name="Invité"
+    )
+    token = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name="Token de validation"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        verbose_name="Statut"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(verbose_name="Expire le")
+    responded_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Invitation"
+        verbose_name_plural = "Invitations"
+        unique_together = [['team', 'invitee', 'status']]
+    
+    def __str__(self):
+        return f"Invitation de {self.invitee.username} pour {self.team.nom}"
+    
+    def is_valid(self):
+        """Vérifie si l'invitation est encore valide"""
+        return (
+            self.status == 'pending' and 
+            timezone.now() < self.expires_at
+        )
+    
+    def accept(self):
+        """Accepte l'invitation"""
+        if not self.is_valid():
+            raise ValidationError("Cette invitation n'est plus valide")
+        
+        can_add, message = self.team.can_add_member(self.invitee)
+        if not can_add:
+            raise ValidationError(message)
+        
+        self.status = 'accepted'
+        self.responded_at = timezone.now()
+        self.save()
+        
+        self.team.membres.add(self.invitee)
+        return True
+    
+    def decline(self):
+        """Refuse l'invitation"""
+        if self.status != 'pending':
+            raise ValidationError("Cette invitation a déjà été traitée")
+        
+        self.status = 'declined'
+        self.responded_at = timezone.now()
+        self.save()
+        return True
+    
+    def save(self, *args, **kwargs):
+        # Générer un token unique si nouveau
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(32)
+        
+        # Définir la date d'expiration (7 jours par défaut)
+        if not self.expires_at:
+            from datetime import timedelta
+            self.expires_at = timezone.now() + timedelta(days=7)
+        
+        super().save(*args, **kwargs)
 
 
 class ContestSubmission(models.Model):

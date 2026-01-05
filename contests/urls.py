@@ -8,6 +8,10 @@ from .views import (
     leave_team,
     test_contest_challenge,
     submit_contest_challenge,
+    list_team_members,
+    accept_invitation,
+    decline_invitation,
+    my_invitations
 )
 
 app_name = 'contests'
@@ -27,9 +31,15 @@ urlpatterns = [
     
     # Gestion des équipes
     path('teams/create/', create_team, name='create-team'),
-    path('teams/<int:team_id>/invite/', invite_member, name='invite-member'),
+    path('teams/<int:team_id>/members/', list_team_members, name='team-members'),
     path('teams/<int:team_id>/remove/', remove_member, name='remove-member'),
     path('teams/<int:team_id>/leave/', leave_team, name='leave-team'),
+
+    path('teams/<int:team_id>/invite/', invite_member, name='invite-member'),
+    path('invitations/accept/<str:token>/', accept_invitation, name='accept-invitation'),
+    path('invitations/decline/<str:token>/', decline_invitation, name='decline-invitation'),
+    path('invitations/me/', my_invitations, name='my-invitations'),
+
     
     # Test et soumission de solutions dans un contest
     path(

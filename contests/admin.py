@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
-from .models import Contest, Team, ContestSubmission
+from .models import Contest, Team, ContestSubmission, TeamInvitation
 
 
 @admin.register(Contest)
@@ -379,3 +379,6 @@ class ContestSubmissionAdmin(admin.ModelAdmin):
         """
         return mark_safe(html)
     submission_stats.short_description = 'Statistiques'
+
+
+admin.site.register(TeamInvitation)
