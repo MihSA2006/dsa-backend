@@ -9,10 +9,10 @@ def send_team_invitation_email(invitation, request=None):
     Envoie un email d'invitation à rejoindre une équipe
     """
     # Construire les URLs d'acceptation et de refus
-    base_url = settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') else 'http://localhost:3000'
+    base_url = settings.FRONTEND_URL if hasattr(settings, 'FRONTEND_URL') else 'http://localhost:8000'
     
-    accept_url = f"{base_url}/invitations/accept/{invitation.token}"
-    decline_url = f"{base_url}/invitations/decline/{invitation.token}"
+    accept_url = f"{base_url}/api/invitations/accept/{invitation.token}"
+    decline_url = f"{base_url}/api/invitations/decline/{invitation.token}"
     
     # Contexte pour le template
     context = {

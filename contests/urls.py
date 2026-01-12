@@ -11,7 +11,10 @@ from .views import (
     list_team_members,
     accept_invitation,
     decline_invitation,
-    my_invitations
+    my_invitations,
+    check_user_role,
+    check_user_captain,
+    check_user_membership
 )
 
 app_name = 'contests'
@@ -40,6 +43,10 @@ urlpatterns = [
     path('invitations/decline/<str:token>/', decline_invitation, name='decline-invitation'),
     path('invitations/me/', my_invitations, name='my-invitations'),
 
+    # Vérification du rôle de l'utilisateur dans un contest
+    path('contests/<int:contest_id>/check-membership/', check_user_membership, name='check-membership'),
+    path('contests/<int:contest_id>/check-captain/', check_user_captain, name='check-captain'),
+    path('contests/<int:contest_id>/check-role/', check_user_role, name='check-role'),  # Vue combinée
     
     # Test et soumission de solutions dans un contest
     path(

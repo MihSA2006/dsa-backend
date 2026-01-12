@@ -15,23 +15,47 @@ from api.serializers import (
 )
 
 
+from django.db.models import Q
+
 class ChallengeViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour gérer les challenges
     
-    - GET /api/challenges/ : Liste tous les challenges
+    - GET /api/challenges/ : Liste tous les challenges (excluant ceux des contests en cours/à venir)
     - GET /api/challenges/{id}/ : Détail d'un challenge
     - POST /api/challenges/ : Créer un challenge
     - PUT /api/challenges/{id}/ : Modifier un challenge
     - DELETE /api/challenges/{id}/ : Supprimer un challenge
     """
     
-    queryset = Challenge.objects.filter(is_active=True)
     parser_classes = (MultiPartParser, FormParser)
+    
+    def get_queryset(self):
+        """
+        Retourne les challenges actifs en excluant ceux qui appartiennent
+        à des contests en cours ou à venir
+        """
+        from contests.models import Contest
+        
+        # Récupérer les IDs des challenges appartenant à des contests non terminés
+        ongoing_or_upcoming_contests = Contest.objects.filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        )
+        
+        excluded_challenge_ids = ongoing_or_upcoming_contests.values_list(
+            'challenges__id', flat=True
+        )
+        
+        # Retourner tous les challenges actifs sauf ceux dans les contests non terminés
+        return Challenge.objects.filter(
+            is_active=True
+        ).exclude(
+            id__in=excluded_challenge_ids
+        )
     
     def get_serializer_class(self):
         if self.action == 'list':
-            return ChallengeStatsSerializer  # 🆕 Changé
+            return ChallengeStatsSerializer
         elif self.action in ['create', 'update', 'partial_update']:
             return ChallengeCreateSerializer
         return ChallengeDetailSerializer
@@ -42,21 +66,17 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         context['request'] = self.request
         return context
     
-
-    
     def list(self, request):
-        """Liste tous les challenges"""
+        """Liste tous les challenges (excluant ceux des contests non terminés)"""
         challenges = self.get_queryset()
         serializer = ChallengeListSerializer(challenges, many=True, context={'request': request})
         return Response(serializer.data)
-
     
     def retrieve(self, request, pk=None):
         """Récupère le détail d'un challenge"""
-        challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
-        serializer = ChallengeDetailSerializer(challenge, context={'request': request})  # 🆕 ajout du contexte
+        challenge = get_object_or_404(self.get_queryset(), pk=pk)
+        serializer = ChallengeDetailSerializer(challenge, context={'request': request})
         return Response(serializer.data)
-
     
     def create(self, request):
         """Crée un nouveau challenge"""

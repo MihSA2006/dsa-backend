@@ -13,6 +13,8 @@ from contests.serializers import (
     TeamInvitationSerializer
 )
 
+from contests.models import Contest
+
 logger = logging.getLogger(__name__)
 
 from contests.utils import send_team_invitation_email
@@ -327,3 +329,140 @@ def list_team_members(request, team_id):
         "xp_total": team.xp_total,
         "members": serializer.data
     })
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_user_membership(request, contest_id):
+    """
+    GET /api/contests/<contest_id>/check-membership/
+    Vérifie si l'utilisateur connecté est membre d'une équipe dans ce contest
+    
+    Response: {
+        "is_member": true/false,
+        "team_id": 5 (ou null si pas membre),
+        "team_name": "Nom de l'équipe" (ou null),
+        "member_count": 3 (ou null)
+    }
+    """
+    contest = get_object_or_404(Contest, pk=contest_id)
+    
+    # Chercher si l'utilisateur est membre d'une équipe dans ce contest
+    team = Team.objects.filter(
+        contest=contest,
+        membres=request.user
+    ).first()
+    
+    if team:
+        return Response({
+            'is_member': True,
+            'team_id': team.id,
+            'team_name': team.nom,
+            'member_count': team.membres.count(),
+            'contest_id': contest.id,
+            'contest_title': contest.title
+        })
+    else:
+        return Response({
+            'is_member': False,
+            'team_id': None,
+            'team_name': None,
+            'member_count': None,
+            'contest_id': contest.id,
+            'contest_title': contest.title
+        })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_user_captain(request, contest_id):
+    """
+    GET /api/contests/<contest_id>/check-captain/
+    Vérifie si l'utilisateur connecté est capitaine d'une équipe dans ce contest
+    
+    Response: {
+        "is_captain": true/false,
+        "team_id": 5 (ou null si pas capitaine),
+        "team_name": "Nom de l'équipe" (ou null),
+        "member_count": 3 (ou null)
+    }
+    """
+    contest = get_object_or_404(Contest, pk=contest_id)
+    
+    # Chercher si l'utilisateur est capitaine d'une équipe dans ce contest
+    team = Team.objects.filter(
+        contest=contest,
+        capitaine=request.user
+    ).first()
+    
+    if team:
+        return Response({
+            'is_captain': True,
+            'team_id': team.id,
+            'team_name': team.nom,
+            'member_count': team.membres.count(),
+            'contest_id': contest.id,
+            'contest_title': contest.title
+        })
+    else:
+        return Response({
+            'is_captain': False,
+            'team_id': None,
+            'team_name': None,
+            'member_count': None,
+            'contest_id': contest.id,
+            'contest_title': contest.title
+        })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_user_role(request, contest_id):
+    """
+    GET /api/contests/<contest_id>/check-role/
+    Vérifie à la fois si l'utilisateur est membre ET capitaine dans ce contest
+    (Vue combinée pour économiser des requêtes)
+    
+    Response: {
+        "is_member": true/false,
+        "is_captain": true/false,
+        "team_id": 5 (ou null),
+        "team_name": "Nom de l'équipe" (ou null),
+        "member_count": 3 (ou null),
+        "role": "captain" | "member" | "none"
+    }
+    """
+    contest = get_object_or_404(Contest, pk=contest_id)
+    
+    # Chercher l'équipe de l'utilisateur dans ce contest
+    team = Team.objects.filter(
+        contest=contest,
+        membres=request.user
+    ).first()
+    
+    if team:
+        is_captain = team.capitaine == request.user
+        role = "captain" if is_captain else "member"
+        
+        return Response({
+            'is_member': True,
+            'is_captain': is_captain,
+            'team_id': team.id,
+            'team_name': team.nom,
+            'member_count': team.membres.count(),
+            'role': role,
+            'contest_id': contest.id,
+            'contest_title': contest.title
+        })
+    else:
+        return Response({
+            'is_member': False,
+            'is_captain': False,
+            'team_id': None,
+            'team_name': None,
+            'member_count': None,
+            'role': 'none',
+            'contest_id': contest.id,
+            'contest_title': contest.title
+        })
