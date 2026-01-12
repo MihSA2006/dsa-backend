@@ -19,6 +19,7 @@ services:
     volumes:
       - ./data/media:/app/media
       - ./data/staticfiles:/app/staticfiles
+      - ./dsa-backend:/app
     env_file:
       - ./.env.production
     environment:
@@ -42,6 +43,8 @@ services:
     restart: unless-stopped
     networks:
       - app-network
+    volumes:
+      - ./dsa:/app
 
   nginx:
     image: nginx:alpine
