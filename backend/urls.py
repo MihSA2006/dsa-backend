@@ -8,6 +8,7 @@ urlpatterns = [
     path('***dsa-staff***/', admin.site.urls),
     path('api/', include('api.urls')),  # Inclut toutes les URLs de l'app api
     path('api/accounts/', include('accounts.urls')),
+    path('api/', include('contests.urls')),
 ]
 
 if settings.DEBUG:

@@ -9,13 +9,13 @@ SECRET_KEY = config("SECRET_KEY")
 DEBUG = True
 # DEBUG = False
 
-if os.environ.get('DOCKER_CONTAINER', False):
-    # Forcer le service des fichiers statiques en Docker
-    import mimetypes
-    mimetypes.add_type("text/css", ".css", True)
+# if os.environ.get('DOCKER_CONTAINER', False):
+#     # Forcer le service des fichiers statiques en Docker
+#     import mimetypes
+#     mimetypes.add_type("text/css", ".css", True)
     
-    # Ou utilisez whitenoise pour servir les static files
-    INSTALLED_APPS = ['whitenoise.runserver_nostatic'] + INSTALLED_APPS
+#     # Ou utilisez whitenoise pour servir les static files
+#     INSTALLED_APPS = ['whitenoise.runserver_nostatic'] + INSTALLED_APPS
 
 ALLOWED_HOSTS = ['*']
 
@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'corsheaders',         
     'api',
     'accounts',
+    'contests',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +100,8 @@ CORS_ALLOWED_ORIGINS = [
     "https://dsa.insi.mg",
     "http://nextjs-1:3000",
     "https://nextjs-1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 

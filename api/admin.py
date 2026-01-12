@@ -1,7 +1,7 @@
 # api/admin.py
 
 from django.contrib import admin
-from .models import Challenge, TestCase, UserChallengeAttempt, Team, TeamInvitation
+from .models import Challenge, TestCase, UserChallengeAttempt
 
 
 class TestCaseInline(admin.TabularInline):
@@ -58,27 +58,3 @@ class UserChallengeAttemptAdmin(admin.ModelAdmin):
             'fields': ('xp_earned', 'attempts_count')
         }),
     )
-
-
-
-
-
-@admin.register(Team)
-class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'challenge', 'leader', 'created_at')
-    list_filter = ('challenge', 'created_at')
-    search_fields = ('name', 'leader__username', 'challenge__title')
-    # ❌ Supprimer ou commenter cette ligne :
-    # filter_horizontal = ('members',)
-    autocomplete_fields = ('leader', 'challenge')
-
-
-@admin.register(TeamInvitation)
-class TeamInvitationAdmin(admin.ModelAdmin):
-    list_display = ('team', 'invited_user', 'invited_by', 'is_accepted', 'created_at')
-    list_filter = ('is_accepted', 'created_at', 'team__challenge')
-    search_fields = ('team__name', 'invited_user__username', 'invited_by__username', 'token')
-    readonly_fields = ('token', 'created_at')
-
-    autocomplete_fields = ('team', 'invited_user', 'invited_by')
-    ordering = ('-created_at',)
