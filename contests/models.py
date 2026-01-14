@@ -23,6 +23,19 @@ class Contest(models.Model):
     ]
     
     title = models.CharField(max_length=200, verbose_name="Titre")
+    description = models.TextField(
+        verbose_name="Description",
+        blank=True,
+        null=True,
+        help_text="Description détaillée du contest"
+    )
+    contest_img = models.ImageField(
+        upload_to='contests/',
+        verbose_name="Image du contest",
+        blank=True,
+        null=True,
+        help_text="Image de couverture du contest"
+    )
     date_debut = models.DateTimeField(verbose_name="Date de début")
     date_fin = models.DateTimeField(verbose_name="Date de fin")
     statut = models.CharField(

@@ -16,6 +16,8 @@ from .views import (
     check_user_captain,
     check_user_membership
 )
+from django.conf import settings
+from django.conf.urls.static import static
 
 app_name = 'contests'
 
@@ -60,3 +62,6 @@ urlpatterns = [
         name='submit-contest-challenge'
     ),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

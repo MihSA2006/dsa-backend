@@ -12,11 +12,13 @@ class ContestListSerializer(serializers.ModelSerializer):
     is_ongoing = serializers.SerializerMethodField()
     is_finished = serializers.SerializerMethodField()
     challenges_count = serializers.SerializerMethodField()
+    contest_img = serializers.ImageField(read_only=True)  # 🆕
     
     class Meta:
         model = Contest
         fields = [
-            'id', 'title', 'date_debut', 'date_fin', 'statut', 
+            'id', 'title', 'description', 'contest_img',  # 🆕 Ajout des nouveaux champs
+            'date_debut', 'date_fin', 'statut', 
             'status_display', 'type', 'type_display', 'nombre_team',
             'is_ongoing', 'is_finished', 'challenges_count', 'created_at'
         ]
@@ -39,11 +41,13 @@ class ContestDetailSerializer(serializers.ModelSerializer):
     is_finished = serializers.SerializerMethodField()
     has_started = serializers.SerializerMethodField()
     challenges = serializers.SerializerMethodField()
+    contest_img = serializers.ImageField(read_only=True)  # 🆕
     
     class Meta:
         model = Contest
         fields = [
-            'id', 'title', 'date_debut', 'date_fin', 'statut',
+            'id', 'title', 'description', 'contest_img',  # 🆕 Ajout des nouveaux champs
+            'date_debut', 'date_fin', 'statut',
             'status_display', 'type', 'type_display', 'nombre_team',
             'is_ongoing', 'is_finished', 'has_started', 'challenges',
             'created_at', 'updated_at'
@@ -64,7 +68,6 @@ class ContestDetailSerializer(serializers.ModelSerializer):
             from api.serializers import ChallengeListSerializer
             return ChallengeListSerializer(obj.challenges.all(), many=True).data
         return []
-
 
 class UserMinimalSerializer(serializers.ModelSerializer):
     """Serializer minimal pour les utilisateurs"""
