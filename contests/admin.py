@@ -10,7 +10,8 @@ class ContestAdmin(admin.ModelAdmin):
     """Administration des contests"""
     
     list_display = [
-        'title', 
+        'title',
+        'contest_image_thumb',  # 🆕 Miniature de l'image
         'statut_badge', 
         'type', 
         'date_debut', 
@@ -27,7 +28,7 @@ class ContestAdmin(admin.ModelAdmin):
         'date_fin'
     ]
     
-    search_fields = ['title']
+    search_fields = ['title', 'description']  # 🆕 Ajout description dans la recherche
     
     filter_horizontal = ['challenges']
     
@@ -36,12 +37,16 @@ class ContestAdmin(admin.ModelAdmin):
         'statut',
         'created_at',
         'updated_at',
-        'status_info'
+        'status_info',
+        'contest_image_preview'  # 🆕 Aperçu de l'image
     ]
     
     fieldsets = (
         ('Informations générales', {
-            'fields': ('title', 'type')
+            'fields': ('title', 'description', 'type')  # 🆕 Ajout description
+        }),
+        ('Image', {  # 🆕 Nouvelle section pour l'image
+            'fields': ('contest_img', 'contest_image_preview')
         }),
         ('Dates et statut', {
             'fields': ('date_debut', 'date_fin', 'statut', 'status_info')
@@ -57,6 +62,26 @@ class ContestAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    def contest_image_thumb(self, obj):
+        """Miniature de l'image dans la liste"""
+        if obj.contest_img:
+            return format_html(
+                '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />',
+                obj.contest_img.url
+            )
+        return format_html('<span style="color: #999;">Pas d\'image</span>')
+    contest_image_thumb.short_description = 'Image'
+    
+    def contest_image_preview(self, obj):
+        """Aperçu de l'image dans le formulaire"""
+        if obj.contest_img:
+            return format_html(
+                '<img src="{}" style="max-width: 300px; max-height: 300px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
+                obj.contest_img.url
+            )
+        return format_html('<span style="color: #999;">Aucune image uploadée</span>')
+    contest_image_preview.short_description = 'Aperçu de l\'image'
     
     def statut_badge(self, obj):
         """Badge coloré pour le statut"""
@@ -381,4 +406,108 @@ class ContestSubmissionAdmin(admin.ModelAdmin):
     submission_stats.short_description = 'Statistiques'
 
 
-admin.site.register(TeamInvitation)
+@admin.register(TeamInvitation)
+class TeamInvitationAdmin(admin.ModelAdmin):
+    """Administration des invitations d'équipe"""
+    
+    list_display = [
+        'id',
+        'team_link',
+        'inviter_link',
+        'invitee_link',
+        'status_badge',
+        'created_at',
+        'expires_at',
+        'is_valid_status'
+    ]
+    
+    list_filter = [
+        'status',
+        'created_at',
+        'expires_at'
+    ]
+    
+    search_fields = [
+        'team__nom',
+        'inviter__username',
+        'invitee__username'
+    ]
+    
+    readonly_fields = [
+        'token',
+        'created_at',
+        'responded_at',
+        'invitation_links'
+    ]
+    
+    fieldsets = (
+        ('Informations', {
+            'fields': ('team', 'inviter', 'invitee', 'status')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'expires_at', 'responded_at')
+        }),
+        ('Token & Liens', {
+            'fields': ('token', 'invitation_links'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def team_link(self, obj):
+        """Lien vers l'équipe"""
+        url = reverse('admin:contests_team_change', args=[obj.team.id])
+        return format_html('<a href="{}">{}</a>', url, obj.team.nom)
+    team_link.short_description = 'Équipe'
+    
+    def inviter_link(self, obj):
+        """Lien vers l'inviteur"""
+        url = reverse('admin:accounts_user_change', args=[obj.inviter.id])
+        return format_html('<a href="{}">{}</a>', url, obj.inviter.username)
+    inviter_link.short_description = 'Invité par'
+    
+    def invitee_link(self, obj):
+        """Lien vers l'invité"""
+        url = reverse('admin:accounts_user_change', args=[obj.invitee.id])
+        return format_html('<a href="{}">{}</a>', url, obj.invitee.username)
+    invitee_link.short_description = 'Invité'
+    
+    def status_badge(self, obj):
+        """Badge du statut"""
+        colors = {
+            'pending': '#FFA500',
+            'accepted': '#28A745',
+            'declined': '#DC3545',
+            'expired': '#6C757D'
+        }
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 10px; '
+            'border-radius: 3px; font-weight: bold;">{}</span>',
+            colors.get(obj.status, '#000'),
+            obj.get_status_display()
+        )
+    status_badge.short_description = 'Statut'
+    
+    def is_valid_status(self, obj):
+        """Indique si l'invitation est valide"""
+        if obj.is_valid():
+            return format_html('<span style="color: green; font-weight: bold;">✅ Valide</span>')
+        return format_html('<span style="color: red; font-weight: bold;">❌ Invalide</span>')
+    is_valid_status.short_description = 'Validité'
+    
+    def invitation_links(self, obj):
+        """Liens d'acceptation et de refus"""
+        from django.conf import settings
+        base_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        accept_url = f"{base_url}/invitations/accept/{obj.token}"
+        decline_url = f"{base_url}/invitations/decline/{obj.token}"
+        
+        html = f"""
+        <div style="padding: 10px; background: #f8f9fa; border-radius: 5px;">
+            <p><strong>Lien d'acceptation:</strong><br>
+            <a href="{accept_url}" target="_blank">{accept_url}</a></p>
+            <p><strong>Lien de refus:</strong><br>
+            <a href="{decline_url}" target="_blank">{decline_url}</a></p>
+        </div>
+        """
+        return mark_safe(html)
+    invitation_links.short_description = 'Liens d\'invitation'
