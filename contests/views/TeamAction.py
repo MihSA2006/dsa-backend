@@ -12,6 +12,7 @@ from contests.serializers import (
     TeamCreateSerializer,
     TeamInvitationSerializer
 )
+from django.utils import timezone
 
 from contests.models import Contest
 
@@ -49,6 +50,85 @@ def create_team(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_team(request, team_id):
+    """
+    DELETE /api/teams/{team_id}/delete/
+    Supprime une équipe d'un contest
+    
+    Restrictions:
+    - Seul le capitaine peut supprimer l'équipe
+    - Impossible de supprimer après le début du contest
+    - Toutes les invitations en attente seront annulées
+    """
+    team = get_object_or_404(Team, pk=team_id)
+    
+    # Vérifier que le requester est le capitaine
+    if team.capitaine != request.user:
+        return Response(
+            {'error': 'Seul le capitaine peut supprimer l\'équipe'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    # Vérifier que le contest n'a pas commencé
+    if team.contest.has_started():
+        return Response(
+            {
+                'error': 'Impossible de supprimer l\'équipe après le début du contest',
+                'contest_status': team.contest.statut,
+                'contest_start': team.contest.date_debut
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Sauvegarder les informations avant suppression
+    team_info = {
+        'id': team.id,
+        'name': team.nom,
+        'contest': team.contest.title,
+        'contest_id': team.contest.id,
+        'members_count': team.membres.count(),
+        'xp_total': team.xp_total
+    }
+    
+    # Compter les invitations en attente
+    pending_invitations = TeamInvitation.objects.filter(
+        team=team,
+        status='pending'
+    )
+    pending_count = pending_invitations.count()
+    
+    try:
+        # Annuler toutes les invitations en attente
+        if pending_count > 0:
+            pending_invitations.update(
+                status='expired',
+                responded_at=timezone.now()
+            )
+        
+        # Supprimer l'équipe (cela supprimera aussi les soumissions via CASCADE)
+        team.delete()
+        
+        return Response({
+            'success': True,
+            'message': f'L\'équipe "{team_info["name"]}" a été supprimée avec succès',
+            'deleted_team': team_info,
+            'cancelled_invitations': pending_count
+        }, status=status.HTTP_200_OK)
+        
+    except ValidationError as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Erreur lors de la suppression de l'équipe {team_id}: {str(e)}")
+        return Response(
+            {'error': 'Une erreur est survenue lors de la suppression de l\'équipe'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -58,7 +138,7 @@ def invite_member(request, team_id):
     Envoie une invitation par email à un membre pour rejoindre l'équipe
     
     Body: {
-        "user_id": 2
+        "user_email": "user@example.com"
     }
     """
     team = get_object_or_404(Team, pk=team_id)
@@ -70,15 +150,37 @@ def invite_member(request, team_id):
             status=status.HTTP_403_FORBIDDEN
         )
     
-    user_id = request.data.get('user_id')
-    if not user_id:
+    user_email = request.data.get('user_email')
+    if not user_email:
         return Response(
-            {'error': 'user_id est requis'},
+            {'error': 'user_email est requis'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Validation basique de l'email
+    if '@' not in user_email:
+        return Response(
+            {'error': 'Format d\'email invalide'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
     from accounts.models import User
-    user = get_object_or_404(User, pk=user_id)
+    
+    # Rechercher l'utilisateur par email
+    try:
+        user = User.objects.get(email=user_email)
+    except User.DoesNotExist:
+        return Response(
+            {'error': f'Aucun utilisateur trouvé avec l\'email {user_email}'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Vérifier que l'utilisateur n'invite pas lui-même
+    if user == request.user:
+        return Response(
+            {'error': 'Vous ne pouvez pas vous inviter vous-même'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
     # Vérifier si l'utilisateur peut être ajouté
     can_add, message = team.can_add_member(user)
@@ -97,7 +199,7 @@ def invite_member(request, team_id):
     
     if existing_invitation and existing_invitation.is_valid():
         return Response(
-            {'error': 'Une invitation est déjà en attente pour cet utilisateur'},
+            {'error': f'Une invitation est déjà en attente pour {user.username}'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -114,8 +216,15 @@ def invite_member(request, team_id):
     if email_sent:
         return Response({
             'success': True,
-            'message': f'Une invitation a été envoyée à {user.username}',
-            'invitation': TeamInvitationSerializer(invitation).data
+            'message': f'Une invitation a été envoyée à {user.email}',
+            'invitation': TeamInvitationSerializer(invitation).data,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'nom': user.nom,
+                'prenom': user.prenom
+            }
         }, status=status.HTTP_201_CREATED)
     else:
         # Supprimer l'invitation si l'email n'a pas pu être envoyé

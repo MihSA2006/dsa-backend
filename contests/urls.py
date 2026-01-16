@@ -14,7 +14,8 @@ from .views import (
     my_invitations,
     check_user_role,
     check_user_captain,
-    check_user_membership
+    check_user_membership,
+    delete_team
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -36,6 +37,7 @@ urlpatterns = [
     
     # Gestion des équipes
     path('teams/create/', create_team, name='create-team'),
+    path('teams/<int:team_id>/delete/', delete_team, name='delete-team'),
     path('teams/<int:team_id>/members/', list_team_members, name='team-members'),
     path('teams/<int:team_id>/remove/', remove_member, name='remove-member'),
     path('teams/<int:team_id>/leave/', leave_team, name='leave-team'),

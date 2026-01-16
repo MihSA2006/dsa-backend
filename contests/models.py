@@ -203,11 +203,34 @@ class Team(models.Model):
             # Mettre à jour le nombre d'équipes du contest
             self.contest.update_team_count()
     
+    # def delete(self, *args, **kwargs):
+    #     contest = self.contest
+    #     super().delete(*args, **kwargs)
+    #     # Mettre à jour le nombre d'équipes
+    #     contest.update_team_count()
+
     def delete(self, *args, **kwargs):
+        """
+        Suppression avec validation
+        - Impossible de supprimer si le contest a commencé
+        """
+        # Vérifier si le contest a commencé
+        if self.contest.has_started():
+            raise ValidationError(
+                "Impossible de supprimer l'équipe après le début du contest"
+            )
+        
         contest = self.contest
         super().delete(*args, **kwargs)
         # Mettre à jour le nombre d'équipes
         contest.update_team_count()
+    
+    def can_be_deleted(self):
+        """Vérifie si l'équipe peut être supprimée"""
+        if self.contest.has_started():
+            return False, "Contest déjà commencé"
+        
+        return True, "OK"
     
     def can_add_member(self, user):
         """Vérifie si on peut ajouter un membre"""

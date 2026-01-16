@@ -1,2 +1,2 @@
 from .ContestAction import ContestViewSet, submit_contest_challenge, test_contest_challenge
-from .TeamAction import create_team, invite_member,  accept_invitation, decline_invitation, my_invitations, remove_member, leave_team, list_team_members, check_user_captain, check_user_membership, check_user_role
+from .TeamAction import create_team, invite_member,  accept_invitation, decline_invitation, my_invitations, remove_member, leave_team, list_team_members, check_user_captain, check_user_membership, check_user_role, delete_team
