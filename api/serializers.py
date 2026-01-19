@@ -154,6 +154,8 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
 
     saved_code = serializers.SerializerMethodField()
     last_saved_at = serializers.SerializerMethodField()
+    
+    in_contest = serializers.SerializerMethodField()  # 🆕 Nouveau champ
 
     class Meta:
         model = Challenge
@@ -164,16 +166,103 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
             'test_cases', 'created_at', 'updated_at',
             'participants_count', 'join',
             'saved_code', 'last_saved_at',
-
-            # 🆕 champs ajoutés
             'started_at', 'completed_at', 'completion_time',
+            'in_contest',  # 🆕 Ajout dans les champs
         ]
 
+    def get_in_contest(self, obj):
+        """
+        Vérifie si le challenge appartient à un contest en cours ou à venir
+        Returns: True si le challenge est dans un contest non terminé, False sinon
+        """
+        from contests.models import Contest
+        
+        # Vérifier si le challenge appartient à des contests
+        ongoing_or_upcoming = Contest.objects.filter(
+            challenges=obj
+        ).filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        ).exists()
+        
+        return ongoing_or_upcoming
+
     def get_description(self, obj):
+        """
+        Retourne la description du challenge
+        
+        🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer 
+        l'accès aux détails des challenges dans des contests en cours/à venir
+        """
+        # ==================== DÉBUT CONTRAINTE ====================
+        # from contests.models import Contest
+        # from rest_framework.exceptions import PermissionDenied
+        # 
+        # # Vérifier si le challenge est dans un contest non terminé
+        # in_ongoing_contest = Contest.objects.filter(
+        #     challenges=obj
+        # ).filter(
+        #     Q(statut='ongoing') | Q(statut='upcoming')
+        # ).exists()
+        # 
+        # if in_ongoing_contest:
+        #     raise PermissionDenied(
+        #         "Ce challenge fait partie d'un contest en cours ou à venir. "
+        #         "Les détails ne sont pas accessibles pour le moment."
+        #     )
+        # ==================== FIN CONTRAINTE ====================
+        
         return obj.get_description()
 
     def get_template(self, obj):
+        """
+        Retourne le template du challenge
+        
+        🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer 
+        l'accès au template des challenges dans des contests en cours/à venir
+        """
+        # ==================== DÉBUT CONTRAINTE ====================
+        # from contests.models import Contest
+        # from rest_framework.exceptions import PermissionDenied
+        # 
+        # # Vérifier si le challenge est dans un contest non terminé
+        # in_ongoing_contest = Contest.objects.filter(
+        #     challenges=obj
+        # ).filter(
+        #     Q(statut='ongoing') | Q(statut='upcoming')
+        # ).exists()
+        # 
+        # if in_ongoing_contest:
+        #     raise PermissionDenied(
+        #         "Ce challenge fait partie d'un contest en cours ou à venir. "
+        #         "Le template n'est pas accessible pour le moment."
+        #     )
+        # ==================== FIN CONTRAINTE ====================
+        
         return obj.get_template()
+    
+    def get_test_cases(self, obj):
+        """
+        Retourne les test cases du challenge
+        
+        🔒 CONTRAINTE ACTIVABLE : Cette méthode est appelée automatiquement
+        Si vous voulez bloquer les test cases, ajoutez la contrainte ici
+        """
+        # Pour bloquer les test cases, décommentez ci-dessous :
+        # ==================== DÉBUT CONTRAINTE ====================
+        # from contests.models import Contest
+        # from rest_framework.exceptions import PermissionDenied
+        # 
+        # in_ongoing_contest = Contest.objects.filter(
+        #     challenges=obj
+        # ).filter(
+        #     Q(statut='ongoing') | Q(statut='upcoming')
+        # ).exists()
+        # 
+        # if in_ongoing_contest:
+        #     return []  # Retourner une liste vide au lieu d'une erreur
+        # ==================== FIN CONTRAINTE ====================
+        
+        return obj.test_cases.all()
 
     def get_join(self, obj):
         request = self.context.get('request')
@@ -182,14 +271,13 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         from api.models import UserChallengeAttempt
         return UserChallengeAttempt.objects.filter(user=request.user, challenge=obj).exists()
 
-    # 🔥 récupération du code sauvegardé
     def get_saved_code(self, obj):
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return None
         from api.models import UserCodeSave
         record = UserCodeSave.objects.filter(user=request.user, challenge=obj).first()
-        return record.code if record else obj.get_template()  # si aucun, retourner le template
+        return record.code if record else obj.get_template()
 
     def get_last_saved_at(self, obj):
         request = self.context.get('request')
