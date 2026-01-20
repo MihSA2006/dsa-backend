@@ -18,15 +18,7 @@ from api.serializers import (
 from django.db.models import Q
 
 class ChallengeViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet pour gérer les challenges
-    
-    - GET /api/challenges/ : Liste tous les challenges (excluant ceux des contests en cours/à venir)
-    - GET /api/challenges/{id}/ : Détail d'un challenge
-    - POST /api/challenges/ : Créer un challenge
-    - PUT /api/challenges/{id}/ : Modifier un challenge
-    - DELETE /api/challenges/{id}/ : Supprimer un challenge
-    """
+    """ViewSet pour gérer les challenges"""
     
     parser_classes = (MultiPartParser, FormParser)
     
@@ -77,29 +69,30 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         Récupère le détail d'un challenge
         
         🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer
-        complètement l'accès aux challenges dans des contests en cours/à venir
+        complètement l'accès aux challenges dans des contests À VENIR
         """
         # ==================== DÉBUT CONTRAINTE GLOBALE ====================
         from contests.models import Contest
         
-        # Vérifier si le challenge est dans un contest non terminé
+        # Vérifier si le challenge est dans un contest À VENIR
         challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
         
-        in_ongoing_contest = Contest.objects.filter(
-            challenges=challenge
-        ).filter(
-            Q(statut='ongoing') | Q(statut='upcoming')
+        # ✅ Seulement bloquer si le contest est À VENIR (pas "ongoing" ou "finished")
+        in_upcoming_contest = Contest.objects.filter(
+            challenges=challenge,
+            statut='upcoming'  # 🔥 Seulement "à venir"
         ).exists()
         
-        if in_ongoing_contest:
+        if in_upcoming_contest:
             return Response({
-                'error': 'Ce challenge fait partie d\'un contest en cours ou à venir',
+                'error': 'Ce challenge fait partie d\'un contest à venir',
                 'in_contest': True,
-                'message': 'Les détails de ce challenge ne sont pas accessibles pour le moment'
+                'contest_status': 'upcoming',
+                'message': 'Les détails de ce challenge seront accessibles une fois le contest commencé'
             }, status=status.HTTP_403_FORBIDDEN)
         # ==================== FIN CONTRAINTE GLOBALE ====================
         
-        challenge = get_object_or_404(self.get_queryset(), pk=pk)
+        challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
         serializer = ChallengeDetailSerializer(challenge, context={'request': request})
         return Response(serializer.data)
     

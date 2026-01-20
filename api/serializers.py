@@ -157,6 +157,7 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
     last_saved_at = serializers.SerializerMethodField()
     
     in_contest = serializers.SerializerMethodField()  # 🆕 Nouveau champ
+    contest_id = serializers.SerializerMethodField()  # 🆕 ID du contest
 
     class Meta:
         model = Challenge
@@ -169,6 +170,7 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
             'saved_code', 'last_saved_at',
             'started_at', 'completed_at', 'completion_time',
             'in_contest',  # 🆕 Ajout dans les champs
+            'contest_id',  # 🆕 ID du contest
         ]
 
     def get_in_contest(self, obj):
@@ -187,28 +189,49 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         
         return ongoing_or_upcoming
 
+    def get_contest_id(self, obj):
+        """
+        Retourne l'ID du contest si le challenge appartient à un contest 
+        à venir ou en cours. Retourne None si le contest est terminé ou 
+        si le challenge n'appartient à aucun contest.
+        
+        Returns: 
+            - int: ID du contest si ongoing ou upcoming
+            - None: si finished ou pas de contest
+        """
+        from contests.models import Contest
+        
+        # Chercher un contest à venir ou en cours
+        contest = Contest.objects.filter(
+            challenges=obj
+        ).filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        ).first()
+        
+        # Retourner l'ID si trouvé, sinon None
+        return contest.id if contest else None
+
     def get_description(self, obj):
         """
         Retourne la description du challenge
         
         🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer 
-        l'accès aux détails des challenges dans des contests en cours/à venir
+        l'accès aux détails des challenges dans des contests À VENIR uniquement
         """
         # ==================== DÉBUT CONTRAINTE ====================
         from contests.models import Contest
         from rest_framework.exceptions import PermissionDenied
         
-        # Vérifier si le challenge est dans un contest non terminé
-        in_ongoing_contest = Contest.objects.filter(
-            challenges=obj
-        ).filter(
-            Q(statut='ongoing') | Q(statut='upcoming')
+        # ✅ Vérifier si le challenge est dans un contest À VENIR
+        in_upcoming_contest = Contest.objects.filter(
+            challenges=obj,
+            statut='upcoming'  # 🔥 Seulement "à venir", pas "ongoing"
         ).exists()
         
-        if in_ongoing_contest:
+        if in_upcoming_contest:
             raise PermissionDenied(
-                "Ce challenge fait partie d'un contest en cours ou à venir. "
-                "Les détails ne sont pas accessibles pour le moment."
+                "Ce challenge fait partie d'un contest à venir. "
+                "Les détails seront accessibles une fois le contest commencé."
             )
         # ==================== FIN CONTRAINTE ====================
         
@@ -219,23 +242,22 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         Retourne le template du challenge
         
         🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer 
-        l'accès au template des challenges dans des contests en cours/à venir
+        l'accès au template des challenges dans des contests À VENIR uniquement
         """
         # ==================== DÉBUT CONTRAINTE ====================
         from contests.models import Contest
         from rest_framework.exceptions import PermissionDenied
         
-        # Vérifier si le challenge est dans un contest non terminé
-        in_ongoing_contest = Contest.objects.filter(
-            challenges=obj
-        ).filter(
-            Q(statut='ongoing') | Q(statut='upcoming')
+        # ✅ Vérifier si le challenge est dans un contest À VENIR
+        in_upcoming_contest = Contest.objects.filter(
+            challenges=obj,
+            statut='upcoming'  # 🔥 Seulement "à venir"
         ).exists()
         
-        if in_ongoing_contest:
+        if in_upcoming_contest:
             raise PermissionDenied(
-                "Ce challenge fait partie d'un contest en cours ou à venir. "
-                "Le template n'est pas accessible pour le moment."
+                "Ce challenge fait partie d'un contest à venir. "
+                "Le template sera accessible une fois le contest commencé."
             )
         # ==================== FIN CONTRAINTE ====================
         
@@ -245,22 +267,20 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         """
         Retourne les test cases du challenge
         
-        🔒 CONTRAINTE ACTIVABLE : Cette méthode est appelée automatiquement
-        Si vous voulez bloquer les test cases, ajoutez la contrainte ici
+        🔒 CONTRAINTE ACTIVABLE : Bloquer les test cases pour les contests À VENIR
         """
         # Pour bloquer les test cases, décommentez ci-dessous :
         # ==================== DÉBUT CONTRAINTE ====================
         from contests.models import Contest
-        from rest_framework.exceptions import PermissionDenied
         
-        in_ongoing_contest = Contest.objects.filter(
-            challenges=obj
-        ).filter(
-            Q(statut='ongoing') | Q(statut='upcoming')
+        # ✅ Vérifier si le challenge est dans un contest À VENIR
+        in_upcoming_contest = Contest.objects.filter(
+            challenges=obj,
+            statut='upcoming'  # 🔥 Seulement "à venir"
         ).exists()
         
-        if in_ongoing_contest:
-            return []  # Retourner une liste vide au lieu d'une erreur
+        if in_upcoming_contest:
+            return []  # Retourner une liste vide
         # ==================== FIN CONTRAINTE ====================
         
         return obj.test_cases.all()
