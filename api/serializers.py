@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework import serializers
 from .models import Challenge, TestCase, UserChallengeAttempt
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -194,21 +195,21 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         l'accès aux détails des challenges dans des contests en cours/à venir
         """
         # ==================== DÉBUT CONTRAINTE ====================
-        # from contests.models import Contest
-        # from rest_framework.exceptions import PermissionDenied
-        # 
-        # # Vérifier si le challenge est dans un contest non terminé
-        # in_ongoing_contest = Contest.objects.filter(
-        #     challenges=obj
-        # ).filter(
-        #     Q(statut='ongoing') | Q(statut='upcoming')
-        # ).exists()
-        # 
-        # if in_ongoing_contest:
-        #     raise PermissionDenied(
-        #         "Ce challenge fait partie d'un contest en cours ou à venir. "
-        #         "Les détails ne sont pas accessibles pour le moment."
-        #     )
+        from contests.models import Contest
+        from rest_framework.exceptions import PermissionDenied
+        
+        # Vérifier si le challenge est dans un contest non terminé
+        in_ongoing_contest = Contest.objects.filter(
+            challenges=obj
+        ).filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        ).exists()
+        
+        if in_ongoing_contest:
+            raise PermissionDenied(
+                "Ce challenge fait partie d'un contest en cours ou à venir. "
+                "Les détails ne sont pas accessibles pour le moment."
+            )
         # ==================== FIN CONTRAINTE ====================
         
         return obj.get_description()
@@ -221,21 +222,21 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         l'accès au template des challenges dans des contests en cours/à venir
         """
         # ==================== DÉBUT CONTRAINTE ====================
-        # from contests.models import Contest
-        # from rest_framework.exceptions import PermissionDenied
-        # 
-        # # Vérifier si le challenge est dans un contest non terminé
-        # in_ongoing_contest = Contest.objects.filter(
-        #     challenges=obj
-        # ).filter(
-        #     Q(statut='ongoing') | Q(statut='upcoming')
-        # ).exists()
-        # 
-        # if in_ongoing_contest:
-        #     raise PermissionDenied(
-        #         "Ce challenge fait partie d'un contest en cours ou à venir. "
-        #         "Le template n'est pas accessible pour le moment."
-        #     )
+        from contests.models import Contest
+        from rest_framework.exceptions import PermissionDenied
+        
+        # Vérifier si le challenge est dans un contest non terminé
+        in_ongoing_contest = Contest.objects.filter(
+            challenges=obj
+        ).filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        ).exists()
+        
+        if in_ongoing_contest:
+            raise PermissionDenied(
+                "Ce challenge fait partie d'un contest en cours ou à venir. "
+                "Le template n'est pas accessible pour le moment."
+            )
         # ==================== FIN CONTRAINTE ====================
         
         return obj.get_template()
@@ -249,17 +250,17 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         """
         # Pour bloquer les test cases, décommentez ci-dessous :
         # ==================== DÉBUT CONTRAINTE ====================
-        # from contests.models import Contest
-        # from rest_framework.exceptions import PermissionDenied
-        # 
-        # in_ongoing_contest = Contest.objects.filter(
-        #     challenges=obj
-        # ).filter(
-        #     Q(statut='ongoing') | Q(statut='upcoming')
-        # ).exists()
-        # 
-        # if in_ongoing_contest:
-        #     return []  # Retourner une liste vide au lieu d'une erreur
+        from contests.models import Contest
+        from rest_framework.exceptions import PermissionDenied
+        
+        in_ongoing_contest = Contest.objects.filter(
+            challenges=obj
+        ).filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        ).exists()
+        
+        if in_ongoing_contest:
+            return []  # Retourner une liste vide au lieu d'une erreur
         # ==================== FIN CONTRAINTE ====================
         
         return obj.test_cases.all()

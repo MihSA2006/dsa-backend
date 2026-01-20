@@ -432,6 +432,7 @@ def list_team_members(request, team_id):
         "team_id": team.id,
         "team_name": team.nom,
         "contest": team.contest.title,
+        "contest_id": team.contest.id,
         "capitaine_id": team.capitaine.id,
         "capitaine_username": team.capitaine.username,
         "total_members": membres.count(),

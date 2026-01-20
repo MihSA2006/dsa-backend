@@ -80,23 +80,23 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         complètement l'accès aux challenges dans des contests en cours/à venir
         """
         # ==================== DÉBUT CONTRAINTE GLOBALE ====================
-        # from contests.models import Contest
-        # 
-        # # Vérifier si le challenge est dans un contest non terminé
-        # challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
-        # 
-        # in_ongoing_contest = Contest.objects.filter(
-        #     challenges=challenge
-        # ).filter(
-        #     Q(statut='ongoing') | Q(statut='upcoming')
-        # ).exists()
-        # 
-        # if in_ongoing_contest:
-        #     return Response({
-        #         'error': 'Ce challenge fait partie d\'un contest en cours ou à venir',
-        #         'in_contest': True,
-        #         'message': 'Les détails de ce challenge ne sont pas accessibles pour le moment'
-        #     }, status=status.HTTP_403_FORBIDDEN)
+        from contests.models import Contest
+        
+        # Vérifier si le challenge est dans un contest non terminé
+        challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
+        
+        in_ongoing_contest = Contest.objects.filter(
+            challenges=challenge
+        ).filter(
+            Q(statut='ongoing') | Q(statut='upcoming')
+        ).exists()
+        
+        if in_ongoing_contest:
+            return Response({
+                'error': 'Ce challenge fait partie d\'un contest en cours ou à venir',
+                'in_contest': True,
+                'message': 'Les détails de ce challenge ne sont pas accessibles pour le moment'
+            }, status=status.HTTP_403_FORBIDDEN)
         # ==================== FIN CONTRAINTE GLOBALE ====================
         
         challenge = get_object_or_404(self.get_queryset(), pk=pk)
