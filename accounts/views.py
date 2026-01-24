@@ -54,7 +54,7 @@ def initiate_registration(request):
         )
         
         # Créer le lien d'inscription
-        registration_link = f"http://dsa.insi.mg/api/accounts/verify-back/register/?token={token.token}"
+        registration_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/register/?token={token.token}"
         
         # Sujet de l'email
         subject = "Invitation à compléter votre inscription"
@@ -154,7 +154,7 @@ def verify_reset_token(request):
         
         if token.is_valid():
             # Redirection vers le frontend avec le token
-            frontend_url = f"http://dsa.insi.mg/reset-password?token={token_value}"
+            frontend_url = f"http://https://dsa-kohl-one.vercel.app/reset-password?token={token_value}"
             return redirect(frontend_url)
         else:
             return Response({
@@ -241,7 +241,7 @@ def verify_token(request):
 
         if token.is_valid():
             # 🔁 Redirection vers le frontend avec le token
-            frontend_url = f"http://dsa.insi.mg/register?token={token_value}"
+            frontend_url = f"https://dsa-kohl-one.vercel.app/register?token={token_value}"
             return redirect(frontend_url)
         
         else:
