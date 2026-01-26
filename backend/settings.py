@@ -7,15 +7,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = True
-# DEBUG = False
-
-# if os.environ.get('DOCKER_CONTAINER', False):
-#     # Forcer le service des fichiers statiques en Docker
-#     import mimetypes
-#     mimetypes.add_type("text/css", ".css", True)
-    
-#     # Ou utilisez whitenoise pour servir les static files
-#     INSTALLED_APPS = ['whitenoise.runserver_nostatic'] + INSTALLED_APPS
 
 ALLOWED_HOSTS = ['*']
 
@@ -162,11 +153,12 @@ SIMPLE_JWT = {
 
 EMAIL_BACKEND = config("EMAIL_BACKEND")
 EMAIL_HOST = config("EMAIL_HOST")
-EMAIL_PORT = config("EMAIL_PORT")
+EMAIL_PORT = config("EMAIL_PORT", cast=int)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_USE_TLS = config("EMAIL_USE_TLS")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool, default=False)
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", cast=bool, default=False)  # AJOUTEZ CECI
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-
+EMAIL_TIMEOUT = 10
 AUTH_USER_MODEL = 'accounts.User'
 
 HANDLER404 = 'accounts.views.custom_404_view'
