@@ -35,6 +35,9 @@ from threading import Thread
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
+from django.template.loader import render_to_string
+from .email_utils import send_email_sendgrid  # ✅ NOUVELLE IMPORT
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def initiate_registration(request):
@@ -66,18 +69,11 @@ def initiate_registration(request):
 
         # 🔥 Fonction pour envoyer l'email de manière asynchrone
         def send_email_async():
-            try:
-                email_message = EmailMultiAlternatives(
-                    subject,
-                    "",  # Version texte (facultatif)
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email]
-                )
-                email_message.attach_alternative(html_content, "text/html")
-                email_message.send(fail_silently=False)
+            success = send_email_sendgrid(email, subject, html_content)
+            if success:
                 print(f"✅ Email envoyé avec succès à {email}")
-            except Exception as e:
-                print(f"❌ Erreur lors de l'envoi de l'email : {e}")
+            else:
+                print(f"❌ Échec de l'envoi à {email}")
         
         # Lancer l'envoi dans un thread séparé
         Thread(target=send_email_async, daemon=True).start()
@@ -85,7 +81,7 @@ def initiate_registration(request):
         return Response({
             'message': 'Email d\'invitation envoyé avec succès.',
             'email': email,
-            'token': str(token.token)  # Pour tests avec Postman
+            'token': str(token.token)
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

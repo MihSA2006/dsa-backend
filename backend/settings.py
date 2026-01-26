@@ -151,12 +151,13 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-EMAIL_BACKEND = config("EMAIL_BACKEND", default="sendgrid_backend.SendgridBackend")
+
+
 SENDGRID_API_KEY = config("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="misandratra.harena3@gmail.com")
 
-# Mode sandbox (True = les emails ne sont pas vraiment envoyés, juste testés)
-SENDGRID_SANDBOX_MODE_IN_DEBUG = config("SENDGRID_SANDBOX_MODE_IN_DEBUG", cast=bool, default=False)
+
+
 
 AUTH_USER_MODEL = 'accounts.User'
 

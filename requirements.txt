@@ -9,9 +9,7 @@ psycopg2-binary
 PyJWT
 python-decouple
 pytz
-sendgrid
-sendgrid-django
-sqlparse
-tzdata
+python-http-client>=3.2.1
+sendgrid>=6.0.0
 gunicorn
 whitenoise
