@@ -31,6 +31,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 
+from threading import Thread
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
@@ -50,29 +53,34 @@ def initiate_registration(request):
         # Créer un nouveau token
         token = RegistrationToken.objects.create(
             email=email,
-            expires_at=timezone.now() + timedelta(hours=48)  # Valide 48h
+            expires_at=timezone.now() + timedelta(hours=48)
         )
         
         # Créer le lien d'inscription
         registration_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/register/?token={token.token}"
         
-        # Sujet de l'email
         subject = "Invitation à compléter votre inscription"
-
-        # 🔹 Charger le template HTML et injecter le lien
         html_content = render_to_string('mail.html', {
             'registration_link': registration_link
         })
 
-        # 🔹 Envoyer l'email au format HTML
-        email_message = EmailMultiAlternatives(
-            subject,
-            "",  # Version texte (facultatif)
-            settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
-            [email]
-        )
-        email_message.attach_alternative(html_content, "text/html")
-        email_message.send()
+        # 🔥 Fonction pour envoyer l'email de manière asynchrone
+        def send_email_async():
+            try:
+                email_message = EmailMultiAlternatives(
+                    subject,
+                    "",  # Version texte (facultatif)
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email]
+                )
+                email_message.attach_alternative(html_content, "text/html")
+                email_message.send(fail_silently=False)
+                print(f"✅ Email envoyé avec succès à {email}")
+            except Exception as e:
+                print(f"❌ Erreur lors de l'envoi de l'email : {e}")
+        
+        # Lancer l'envoi dans un thread séparé
+        Thread(target=send_email_async, daemon=True).start()
         
         return Response({
             'message': 'Email d\'invitation envoyé avec succès.',
@@ -81,6 +89,59 @@ def initiate_registration(request):
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# @api_view(['POST'])
+# @permission_classes([IsAdminUser])
+# def initiate_registration(request):
+#     """
+#     Vue pour l'admin qui initie l'inscription.
+#     L'admin envoie seulement l'email.
+#     """
+#     serializer = InitiateRegistrationSerializer(data=request.data)
+    
+#     if serializer.is_valid():
+#         email = serializer.validated_data['email']
+        
+#         # Supprimer l'ancien token si existe
+#         RegistrationToken.objects.filter(email=email).delete()
+        
+#         # Créer un nouveau token
+#         token = RegistrationToken.objects.create(
+#             email=email,
+#             expires_at=timezone.now() + timedelta(hours=48)  # Valide 48h
+#         )
+        
+#         # Créer le lien d'inscription
+#         registration_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/register/?token={token.token}"
+        
+#         # Sujet de l'email
+#         subject = "Invitation à compléter votre inscription"
+
+#         # 🔹 Charger le template HTML et injecter le lien
+#         html_content = render_to_string('mail.html', {
+#             'registration_link': registration_link
+#         })
+
+#         # 🔹 Envoyer l'email au format HTML
+#         email_message = EmailMultiAlternatives(
+#             subject,
+#             "",  # Version texte (facultatif)
+#             settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
+#             [email]
+#         )
+#         email_message.attach_alternative(html_content, "text/html")
+#         email_message.send()
+        
+#         return Response({
+#             'message': 'Email d\'invitation envoyé avec succès.',
+#             'email': email,
+#             'token': str(token.token)  # Pour tests avec Postman
+#         }, status=status.HTTP_201_CREATED)
+    
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 

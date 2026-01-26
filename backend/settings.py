@@ -151,14 +151,13 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-EMAIL_BACKEND = config("EMAIL_BACKEND")
-EMAIL_HOST = config("EMAIL_HOST")
-EMAIL_PORT = config("EMAIL_PORT", cast=int)
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool, default=False)
-EMAIL_USE_SSL = config("EMAIL_USE_SSL", cast=bool, default=False)  # AJOUTEZ CECI
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-EMAIL_TIMEOUT = 10
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="sendgrid_backend.SendgridBackend")
+SENDGRID_API_KEY = config("SENDGRID_API_KEY")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="misandratra.harena3@gmail.com")
+
+# Mode sandbox (True = les emails ne sont pas vraiment envoyés, juste testés)
+SENDGRID_SANDBOX_MODE_IN_DEBUG = config("SENDGRID_SANDBOX_MODE_IN_DEBUG", cast=bool, default=False)
+
 AUTH_USER_MODEL = 'accounts.User'
 
 HANDLER404 = 'accounts.views.custom_404_view'
