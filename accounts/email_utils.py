@@ -9,14 +9,6 @@ logger = logging.getLogger(__name__)
 def send_email_sendgrid(to_email, subject, html_content):
     """
     Envoie un email via l'API SendGrid
-    
-    Args:
-        to_email (str): Email du destinataire
-        subject (str): Sujet de l'email
-        html_content (str): Contenu HTML de l'email
-    
-    Returns:
-        bool: True si envoyé, False sinon
     """
     try:
         message = Mail(
@@ -34,4 +26,7 @@ def send_email_sendgrid(to_email, subject, html_content):
         
     except Exception as e:
         logger.error(f"❌ Erreur SendGrid pour {to_email}: {str(e)}")
+        # Afficher plus de détails sur l'erreur
+        if hasattr(e, 'body'):
+            logger.error(f"Détails: {e.body}")
         return False
