@@ -108,7 +108,7 @@ def initiate_password_reset(request):
         )
         
         # Créer le lien de réinitialisation
-        reset_link = f"http://dsa.insi.mg/api/accounts/verify-back/password-reset/?token={token.token}"
+        reset_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/password-reset/?token={token.token}"
         
         # Sujet de l'email
         subject = "Réinitialisation de votre mot de passe"
@@ -154,7 +154,7 @@ def verify_reset_token(request):
         
         if token.is_valid():
             # Redirection vers le frontend avec le token
-            frontend_url = f"http://https://dsa-kohl-one.vercel.app/reset-password?token={token_value}"
+            frontend_url = f"https://dsa-kohl-one.vercel.app/reset-password?token={token_value}"
             return redirect(frontend_url)
         else:
             return Response({
