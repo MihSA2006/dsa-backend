@@ -165,7 +165,7 @@ def my_stats(request):
             'prenom': user.prenom,
             'total_xp': user.total_xp,
             'challenges_joined': user.challenges_joined,
-            'photo': user.photo if user.photo else None
+            'photo': user.photo.url if user.photo else None  # ✅ Changement ici
         },
         'challenges': {
             'joined': attempts.count(),
