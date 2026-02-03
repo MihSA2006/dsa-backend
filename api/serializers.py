@@ -75,10 +75,11 @@ class TestCaseSerializer(serializers.ModelSerializer):
         """Lire le contenu du fichier d'entrée depuis Cloudinary"""
         if obj.input_file:
             try:
-                # CloudinaryField stocke l'URL, pas le chemin local
                 response = requests.get(obj.input_file.url, timeout=10)
                 if response.status_code == 200:
-                    return response.text
+                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
+                    content = response.text.replace('\r\n', '\n').replace('\r', '\n')
+                    return content
                 return f"[Erreur lecture input: HTTP {response.status_code}]"
             except Exception as e:
                 return f"[Erreur lecture input: {e}]"
@@ -88,14 +89,16 @@ class TestCaseSerializer(serializers.ModelSerializer):
         """Lire le contenu du fichier de sortie depuis Cloudinary"""
         if obj.output_file:
             try:
-                # CloudinaryField stocke l'URL, pas le chemin local
                 response = requests.get(obj.output_file.url, timeout=10)
                 if response.status_code == 200:
-                    return response.text
+                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
+                    content = response.text.replace('\r\n', '\n').replace('\r', '\n')
+                    return content
                 return f"[Erreur lecture output: HTTP {response.status_code}]"
             except Exception as e:
                 return f"[Erreur lecture output: {e}]"
         return None
+
 
 
 

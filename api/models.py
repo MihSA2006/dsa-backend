@@ -38,7 +38,7 @@ class Challenge(models.Model):
         resource_type='raw',
         blank=True,
         null=True,
-        # verbose_name="Fichier description (markdown)"
+        verbose_name="Fichier description (markdown)"
     )
     
     # Template initial
@@ -47,7 +47,7 @@ class Challenge(models.Model):
         resource_type='raw',
         blank=True,
         null=True,
-        # verbose_name="Fichier template (.py)"
+        verbose_name="Fichier template (.py)"
     )
     
     # XP Reward
@@ -73,7 +73,7 @@ class Challenge(models.Model):
         resource_type='raw',
         blank=True,
         null=True,
-        # verbose_name="Description en PDF"
+        verbose_name="Description en PDF"
     )
 
     # Image optionnelle
@@ -81,7 +81,7 @@ class Challenge(models.Model):
         'image',
         blank=True,
         null=True,
-        # verbose_name="Image de description"
+        verbose_name="Image de description"
     )
 
     # Métadonnées
@@ -101,11 +101,11 @@ class Challenge(models.Model):
         """Lit et retourne le contenu du fichier description depuis Cloudinary"""
         try:
             if self.description_file:
-                # Cloudinary stocke l'URL, vous devrez télécharger le contenu
                 import requests
-                response = requests.get(self.description_file.url)
+                response = requests.get(self.description_file.url, timeout=10)
                 if response.status_code == 200:
-                    return response.text
+                    # Normaliser les sauts de ligne
+                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
             return ""
         except Exception:
             return ""
@@ -114,11 +114,11 @@ class Challenge(models.Model):
         """Lit et retourne le contenu du fichier template depuis Cloudinary"""
         try:
             if self.template_file:
-                # Cloudinary stocke l'URL, vous devrez télécharger le contenu
                 import requests
-                response = requests.get(self.template_file.url)
+                response = requests.get(self.template_file.url, timeout=10)
                 if response.status_code == 200:
-                    return response.text
+                    # Normaliser les sauts de ligne
+                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
             return ""
         except Exception:
             return ""
@@ -159,7 +159,7 @@ class TestCase(models.Model):
         resource_type='raw',
         blank=True,
         null=True,
-        # verbose_name="Fichier input (.txt)"
+        verbose_name="Fichier input (.txt)"
     )
     
     output_file = CloudinaryField(
@@ -167,7 +167,7 @@ class TestCase(models.Model):
         resource_type='raw',
         blank=True,
         null=True,
-        # verbose_name="Fichier output (.txt)"
+        verbose_name="Fichier output (.txt)"
     )
     
     # Ordre d'affichage
@@ -192,9 +192,10 @@ class TestCase(models.Model):
         try:
             if self.input_file:
                 import requests
-                response = requests.get(self.input_file.url)
+                response = requests.get(self.input_file.url, timeout=10)
                 if response.status_code == 200:
-                    return response.text
+                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
+                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
             return ""
         except Exception:
             return ""
@@ -204,13 +205,13 @@ class TestCase(models.Model):
         try:
             if self.output_file:
                 import requests
-                response = requests.get(self.output_file.url)
+                response = requests.get(self.output_file.url, timeout=10)
                 if response.status_code == 200:
-                    return response.text
+                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
+                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
             return ""
         except Exception:
             return ""
-
 
 # 🆕 NOUVEAU MODÈLE
 class UserChallengeAttempt(models.Model):
