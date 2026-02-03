@@ -5,6 +5,7 @@ from rest_framework import serializers
 from .models import Challenge, TestCase, UserChallengeAttempt
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+import requests
 
 User = get_user_model()
 
@@ -71,21 +72,27 @@ class TestCaseSerializer(serializers.ModelSerializer):
         ]
 
     def get_input_content(self, obj):
-        """Lire le contenu du fichier d'entrée"""
+        """Lire le contenu du fichier d'entrée depuis Cloudinary"""
         if obj.input_file:
             try:
-                with open(obj.input_file.path, 'r', encoding='utf-8') as f:
-                    return f.read()
+                # CloudinaryField stocke l'URL, pas le chemin local
+                response = requests.get(obj.input_file.url, timeout=10)
+                if response.status_code == 200:
+                    return response.text
+                return f"[Erreur lecture input: HTTP {response.status_code}]"
             except Exception as e:
                 return f"[Erreur lecture input: {e}]"
         return None
 
     def get_output_content(self, obj):
-        """Lire le contenu du fichier de sortie"""
+        """Lire le contenu du fichier de sortie depuis Cloudinary"""
         if obj.output_file:
             try:
-                with open(obj.output_file.path, 'r', encoding='utf-8') as f:
-                    return f.read()
+                # CloudinaryField stocke l'URL, pas le chemin local
+                response = requests.get(obj.output_file.url, timeout=10)
+                if response.status_code == 200:
+                    return response.text
+                return f"[Erreur lecture output: HTTP {response.status_code}]"
             except Exception as e:
                 return f"[Erreur lecture output: {e}]"
         return None
@@ -94,9 +101,8 @@ class TestCaseSerializer(serializers.ModelSerializer):
 
 class ChallengeListSerializer(serializers.ModelSerializer):
     test_cases_count = serializers.SerializerMethodField()
-    join = serializers.SerializerMethodField()    # 🆕
-    status = serializers.SerializerMethodField()  # 🆕
-
+    join = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Challenge
@@ -104,7 +110,7 @@ class ChallengeListSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'difficulty',
             'test_cases_count', 'created_at',
             'xp_reward', 'participants_count',
-            'join', 'status'   # 🆕 ajoutés
+            'join', 'status'
         ]
 
     def get_test_cases_count(self, obj):
@@ -142,6 +148,7 @@ class ChallengeListSerializer(serializers.ModelSerializer):
 
 
 
+
 class ChallengeDetailSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     template = serializers.SerializerMethodField()
@@ -156,8 +163,8 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
     saved_code = serializers.SerializerMethodField()
     last_saved_at = serializers.SerializerMethodField()
     
-    in_contest = serializers.SerializerMethodField()  # 🆕 Nouveau champ
-    contest_id = serializers.SerializerMethodField()  # 🆕 ID du contest
+    in_contest = serializers.SerializerMethodField()
+    contest_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Challenge
@@ -169,18 +176,15 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
             'participants_count', 'join',
             'saved_code', 'last_saved_at',
             'started_at', 'completed_at', 'completion_time',
-            'in_contest',  # 🆕 Ajout dans les champs
-            'contest_id',  # 🆕 ID du contest
+            'in_contest',
+            'contest_id',
         ]
 
     def get_in_contest(self, obj):
-        """
-        Vérifie si le challenge appartient à un contest en cours ou à venir
-        Returns: True si le challenge est dans un contest non terminé, False sinon
-        """
+        """Vérifie si le challenge appartient à un contest en cours ou à venir"""
         from contests.models import Contest
+        from django.db.models import Q
         
-        # Vérifier si le challenge appartient à des contests
         ongoing_or_upcoming = Contest.objects.filter(
             challenges=obj
         ).filter(
@@ -190,42 +194,27 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         return ongoing_or_upcoming
 
     def get_contest_id(self, obj):
-        """
-        Retourne l'ID du contest si le challenge appartient à un contest 
-        à venir ou en cours. Retourne None si le contest est terminé ou 
-        si le challenge n'appartient à aucun contest.
-        
-        Returns: 
-            - int: ID du contest si ongoing ou upcoming
-            - None: si finished ou pas de contest
-        """
+        """Retourne l'ID du contest si ongoing ou upcoming, None sinon"""
         from contests.models import Contest
+        from django.db.models import Q
         
-        # Chercher un contest à venir ou en cours
         contest = Contest.objects.filter(
             challenges=obj
         ).filter(
             Q(statut='ongoing') | Q(statut='upcoming')
         ).first()
         
-        # Retourner l'ID si trouvé, sinon None
         return contest.id if contest else None
 
     def get_description(self, obj):
-        """
-        Retourne la description du challenge
-        
-        🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer 
-        l'accès aux détails des challenges dans des contests À VENIR uniquement
-        """
-        # ==================== DÉBUT CONTRAINTE ====================
+        """Retourne la description du challenge depuis Cloudinary"""
         from contests.models import Contest
         from rest_framework.exceptions import PermissionDenied
         
-        # ✅ Vérifier si le challenge est dans un contest À VENIR
+        # Vérifier si le challenge est dans un contest À VENIR
         in_upcoming_contest = Contest.objects.filter(
             challenges=obj,
-            statut='upcoming'  # 🔥 Seulement "à venir", pas "ongoing"
+            statut='upcoming'
         ).exists()
         
         if in_upcoming_contest:
@@ -233,25 +222,19 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
                 "Ce challenge fait partie d'un contest à venir. "
                 "Les détails seront accessibles une fois le contest commencé."
             )
-        # ==================== FIN CONTRAINTE ====================
         
+        # Utiliser la méthode get_description() du modèle (qui utilise requests)
         return obj.get_description()
 
     def get_template(self, obj):
-        """
-        Retourne le template du challenge
-        
-        🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer 
-        l'accès au template des challenges dans des contests À VENIR uniquement
-        """
-        # ==================== DÉBUT CONTRAINTE ====================
+        """Retourne le template du challenge depuis Cloudinary"""
         from contests.models import Contest
         from rest_framework.exceptions import PermissionDenied
         
-        # ✅ Vérifier si le challenge est dans un contest À VENIR
+        # Vérifier si le challenge est dans un contest À VENIR
         in_upcoming_contest = Contest.objects.filter(
             challenges=obj,
-            statut='upcoming'  # 🔥 Seulement "à venir"
+            statut='upcoming'
         ).exists()
         
         if in_upcoming_contest:
@@ -259,29 +242,22 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
                 "Ce challenge fait partie d'un contest à venir. "
                 "Le template sera accessible une fois le contest commencé."
             )
-        # ==================== FIN CONTRAINTE ====================
         
+        # Utiliser la méthode get_template() du modèle (qui utilise requests)
         return obj.get_template()
     
     def get_test_cases(self, obj):
-        """
-        Retourne les test cases du challenge
-        
-        🔒 CONTRAINTE ACTIVABLE : Bloquer les test cases pour les contests À VENIR
-        """
-        # Pour bloquer les test cases, décommentez ci-dessous :
-        # ==================== DÉBUT CONTRAINTE ====================
+        """Retourne les test cases du challenge"""
         from contests.models import Contest
         
-        # ✅ Vérifier si le challenge est dans un contest À VENIR
+        # Vérifier si le challenge est dans un contest À VENIR
         in_upcoming_contest = Contest.objects.filter(
             challenges=obj,
-            statut='upcoming'  # 🔥 Seulement "à venir"
+            statut='upcoming'
         ).exists()
         
         if in_upcoming_contest:
             return []  # Retourner une liste vide
-        # ==================== FIN CONTRAINTE ====================
         
         return obj.test_cases.all()
 
@@ -327,7 +303,6 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
     def get_completion_time(self, obj):
         attempt = self._get_attempt(obj)
         return attempt.completion_time if attempt else None
-
 
 
 
