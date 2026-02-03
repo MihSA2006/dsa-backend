@@ -34,7 +34,7 @@ class Challenge(models.Model):
     
     # Description (fichier markdown)
     description_file = CloudinaryField(
-        'file',
+        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
@@ -43,7 +43,7 @@ class Challenge(models.Model):
     
     # Template initial
     template_file = CloudinaryField(
-        'file',
+        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
@@ -69,7 +69,7 @@ class Challenge(models.Model):
 
     # Description PDF optionnelle
     description_pdf = CloudinaryField(
-        'file',
+        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
@@ -78,7 +78,7 @@ class Challenge(models.Model):
 
     # Image optionnelle
     description_img = CloudinaryField(
-        'image',
+        # 'image',
         blank=True,
         null=True,
         verbose_name="Image de description"
@@ -155,7 +155,7 @@ class TestCase(models.Model):
     
     # Fichiers input/output
     input_file = CloudinaryField(
-        'file',
+        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
@@ -163,7 +163,7 @@ class TestCase(models.Model):
     )
     
     output_file = CloudinaryField(
-        'file',
+        # 'file',
         resource_type='raw',
         blank=True,
         null=True,

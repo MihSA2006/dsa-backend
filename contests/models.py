@@ -30,10 +30,10 @@ class Contest(models.Model):
         help_text="Description détaillée du contest"
     )
     contest_img = CloudinaryField(
-        'image',
+        # 'image',
         blank=True,
         null=True,
-        # verbose_name="Image du contest",
+        verbose_name="Image du contest",
         help_text="Image de couverture du contest"
     )
     date_debut = models.DateTimeField(verbose_name="Date de début")
