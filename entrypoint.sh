@@ -2,6 +2,7 @@
 set -e
 
 echo "🚀 Running database migrations..."
+python manage.py makemigrations --noinput
 python manage.py migrate --noinput
 
 echo "👤 Creating superuser if not exists..."

@@ -3,6 +3,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 import uuid
+from cloudinary.models import CloudinaryField
 
 class User(AbstractUser):
     # Les champs de AbstractUser inclus par défaut : 
@@ -11,7 +12,7 @@ class User(AbstractUser):
     # Vos champs personnalisés
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
-    photo = models.ImageField(upload_to='photos/', null=True, blank=True)
+    photo = CloudinaryField('image', blank=True, null=True)
     numero_inscription = models.CharField(max_length=50, unique=True)
 
     CLASSE_CHOICES = [
@@ -21,18 +22,15 @@ class User(AbstractUser):
         ("M1", "M1"),
         ("M2", "M2"),
     ]
-    # classe = models.CharField(max_length=2, choices=CLASSE_CHOICES)
-
     classe = models.CharField(max_length=2, choices=CLASSE_CHOICES, default='L1')
+    
     PARCOURS_CHOICES = [
         ("Software Engineering", "Software Engineering"),
         ("Artificial Intelligence", "Artificial Intelligence"),
         ("Network Administration", "Network Administration"),
         ("Common Core", "Common Core"),
     ]
-    # parcours = models.CharField(max_length=50, choices=PARCOURS_CHOICES)
     parcours = models.CharField(max_length=50, choices=PARCOURS_CHOICES, default='Common Core')
-
     
     # Champs supplémentaires utiles
     email = models.EmailField(unique=True)  # Rendre email unique
@@ -74,6 +72,8 @@ class User(AbstractUser):
         )
         
         self.save()
+
+
 class RegistrationToken(models.Model):
     """Modèle pour stocker les tokens d'inscription"""
     email = models.EmailField(unique=True)

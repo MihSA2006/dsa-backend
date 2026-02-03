@@ -9,9 +9,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.urls import reverse
 import uuid
-
-
-# api/models.py
+from cloudinary.models import CloudinaryField
 
 class Challenge(models.Model):
     """
@@ -35,17 +33,21 @@ class Challenge(models.Model):
     )
     
     # Description (fichier markdown)
-    description_file = models.FileField(
-        upload_to='challenges/descriptions/',
-        validators=[FileExtensionValidator(allowed_extensions=['txt', 'md'])],
-        verbose_name="Fichier description (markdown)"
+    description_file = CloudinaryField(
+        'file',
+        resource_type='raw',
+        blank=True,
+        null=True,
+        # verbose_name="Fichier description (markdown)"
     )
     
     # Template initial
-    template_file = models.FileField(
-        upload_to='challenges/templates/',
-        validators=[FileExtensionValidator(allowed_extensions=['py'])],
-        verbose_name="Fichier template (.py)"
+    template_file = CloudinaryField(
+        'file',
+        resource_type='raw',
+        blank=True,
+        null=True,
+        # verbose_name="Fichier template (.py)"
     )
     
     # XP Reward
@@ -66,23 +68,21 @@ class Challenge(models.Model):
     )
 
     # Description PDF optionnelle
-    description_pdf = models.FileField(
-        upload_to='challenges/descriptions/pdf/',
-        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
-        null=True,
+    description_pdf = CloudinaryField(
+        'file',
+        resource_type='raw',
         blank=True,
-        verbose_name="Description en PDF"
+        null=True,
+        # verbose_name="Description en PDF"
     )
 
     # Image optionnelle
-    description_img = models.ImageField(
-        upload_to='challenges/descriptions/images/',
-        null=True,
+    description_img = CloudinaryField(
+        'image',
         blank=True,
-        verbose_name="Image de description"
+        null=True,
+        # verbose_name="Image de description"
     )
-
-
 
     # Métadonnées
     created_at = models.DateTimeField(auto_now_add=True)
@@ -98,18 +98,28 @@ class Challenge(models.Model):
         return f"{self.title} ({self.get_difficulty_display()}) - {self.xp_reward} XP"
     
     def get_description(self):
-        """Lit et retourne le contenu du fichier description"""
+        """Lit et retourne le contenu du fichier description depuis Cloudinary"""
         try:
-            with open(self.description_file.path, 'r', encoding='utf-8') as f:
-                return f.read()
+            if self.description_file:
+                # Cloudinary stocke l'URL, vous devrez télécharger le contenu
+                import requests
+                response = requests.get(self.description_file.url)
+                if response.status_code == 200:
+                    return response.text
+            return ""
         except Exception:
             return ""
     
     def get_template(self):
-        """Lit et retourne le contenu du fichier template"""
+        """Lit et retourne le contenu du fichier template depuis Cloudinary"""
         try:
-            with open(self.template_file.path, 'r', encoding='utf-8') as f:
-                return f.read()
+            if self.template_file:
+                # Cloudinary stocke l'URL, vous devrez télécharger le contenu
+                import requests
+                response = requests.get(self.template_file.url)
+                if response.status_code == 200:
+                    return response.text
+            return ""
         except Exception:
             return ""
     
@@ -129,8 +139,6 @@ class Challenge(models.Model):
             status='completed'
         ).count()
         return round((completed / self.participants_count) * 100, 2)
-    
-
 
 
 class TestCase(models.Model):
@@ -146,16 +154,20 @@ class TestCase(models.Model):
     )
     
     # Fichiers input/output
-    input_file = models.FileField(
-        upload_to='challenges/inputs/',
-        validators=[FileExtensionValidator(allowed_extensions=['txt'])],
-        verbose_name="Fichier input (.txt)"
+    input_file = CloudinaryField(
+        'file',
+        resource_type='raw',
+        blank=True,
+        null=True,
+        # verbose_name="Fichier input (.txt)"
     )
     
-    output_file = models.FileField(
-        upload_to='challenges/outputs/',
-        validators=[FileExtensionValidator(allowed_extensions=['txt'])],
-        verbose_name="Fichier output (.txt)"
+    output_file = CloudinaryField(
+        'file',
+        resource_type='raw',
+        blank=True,
+        null=True,
+        # verbose_name="Fichier output (.txt)"
     )
     
     # Ordre d'affichage
@@ -176,18 +188,26 @@ class TestCase(models.Model):
         return f"Test {self.order} - {self.challenge.title}"
     
     def get_input(self):
-        """Lit et retourne le contenu du fichier input"""
+        """Lit et retourne le contenu du fichier input depuis Cloudinary"""
         try:
-            with open(self.input_file.path, 'r', encoding='utf-8') as f:
-                return f.read()
+            if self.input_file:
+                import requests
+                response = requests.get(self.input_file.url)
+                if response.status_code == 200:
+                    return response.text
+            return ""
         except Exception:
             return ""
     
     def get_output(self):
-        """Lit et retourne le contenu du fichier output"""
+        """Lit et retourne le contenu du fichier output depuis Cloudinary"""
         try:
-            with open(self.output_file.path, 'r', encoding='utf-8') as f:
-                return f.read()
+            if self.output_file:
+                import requests
+                response = requests.get(self.output_file.url)
+                if response.status_code == 200:
+                    return response.text
+            return ""
         except Exception:
             return ""
 

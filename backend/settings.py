@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 from decouple import config
+
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -20,8 +21,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'cloudinary_storage',  # ← Ajoutez AVANT django.contrib.staticfiles
-    'cloudinary',          # ← Ajoutez ici
+    # 'cloudinary_storage',
+    'cloudinary',          
     'rest_framework',
     'rest_framework_simplejwt',      
     'corsheaders',         
@@ -162,27 +163,11 @@ USE_TZ = True
 # ============================================
 # CONFIGURATION CLOUDINARY
 # ============================================
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': config('CLOUDINARY_API_KEY'),
-    'API_SECRET': config('CLOUDINARY_API_SECRET'),
-}
-
-# Configuration Cloudinary
 cloudinary.config(
     cloud_name=config('CLOUDINARY_CLOUD_NAME'),
     api_key=config('CLOUDINARY_API_KEY'),
     api_secret=config('CLOUDINARY_API_SECRET'),
-    secure=True
 )
-
-# Utiliser Cloudinary pour MEDIA files
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Configuration MEDIA (garde pour compatibilité locale)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # ============================================
 # CONFIGURATION STATIC FILES
@@ -194,11 +179,3 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-

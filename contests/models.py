@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from accounts.models import User
 from api.models import Challenge
-
+from cloudinary.models import CloudinaryField
 
 class Contest(models.Model):
     """
@@ -29,11 +29,11 @@ class Contest(models.Model):
         null=True,
         help_text="Description détaillée du contest"
     )
-    contest_img = models.ImageField(
-        upload_to='contests/',
-        verbose_name="Image du contest",
+    contest_img = CloudinaryField(
+        'image',
         blank=True,
         null=True,
+        # verbose_name="Image du contest",
         help_text="Image de couverture du contest"
     )
     date_debut = models.DateTimeField(verbose_name="Date de début")
@@ -114,8 +114,6 @@ class Contest(models.Model):
         if not self.date_debut:
             return False
         return timezone.now() >= self.date_debut
-
-    
 
     def is_ongoing(self):
         if not self.date_debut or not self.date_fin:
