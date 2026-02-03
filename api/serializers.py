@@ -412,14 +412,14 @@ class ChallengeStatsSerializer(serializers.ModelSerializer):
 
 class ChallengeLeaderboardSerializer(serializers.Serializer):
     """Serializer pour le leaderboard d'un challenge"""
-    rank = serializers.IntegerField()
+    rank = serializers.IntegerField(allow_null=True)
     user_id = serializers.IntegerField()
     username = serializers.CharField()
     nom = serializers.CharField()
     prenom = serializers.CharField()
     xp_earned = serializers.IntegerField()
-    completion_time = serializers.IntegerField()
-    completed_at = serializers.DateTimeField()
+    completion_time = serializers.IntegerField(allow_null=True)
+    completed_at = serializers.DateTimeField(allow_null=True)
     status = serializers.CharField()
 
 
@@ -433,3 +433,4 @@ class GlobalLeaderboardSerializer(serializers.Serializer):
     total_xp = serializers.IntegerField()
     challenges_joined = serializers.IntegerField()
     challenges_completed = serializers.IntegerField()
+    total_completion_time = serializers.IntegerField(allow_null=True)  # ✅ AJOUT
