@@ -179,8 +179,11 @@ def test_challenge_solution(request, challenge_id):
     # Récupérer le code envoyé dans le body de la requête
     try:
         code = get_code(request)
+
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
+    
+    # print("---------\nCode : \n", code)
 
     # Vérifier si le code est sécurisé
     resp_security = validate_code_security(code)
@@ -380,6 +383,9 @@ def test_specific_test_case(request, challenge_id, test_case_id):
         code = get_code(request)
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
+    
+    print("---------\n---------\n---------\nCode : \n", code)
+
 
     # Vérifier la sécurité du code
     resp_security = validate_code_security(code)
@@ -395,6 +401,8 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             'expected_output': test_case.get_output(),
             'order': test_case.order
         }])
+
+        print("----------------\n Result : \n", result)
 
         # Ajouter un message clair pour le frontend selon succès/échec
         if result['success']:
