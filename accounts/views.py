@@ -337,7 +337,7 @@ def complete_registration(request):
 def list_users(request):
     """Liste tous les utilisateurs (admin seulement)"""
     users = User.objects.all()
-    serializer = UserSerializer(users, many=True)
+    serializer = UserSerializer(users, many=True, context={'request': request})
     return Response(serializer.data)
 
 

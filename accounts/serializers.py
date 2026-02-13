@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import User, RegistrationToken
+from django.contrib.auth import get_user_model
 
 class InitiateRegistrationSerializer(serializers.Serializer):
     """Serializer pour l'admin qui initie l'inscription"""
@@ -65,15 +66,26 @@ class CompleteRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+User = get_user_model()
+
 class UserSerializer(serializers.ModelSerializer):
     """Serializer pour afficher les informations utilisateur"""
+    photo = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = [
             'id', 'nom', 'prenom', 'username', 'email',
             'photo', 'numero_inscription', 'parcours', 'classe',
-            'challenges_joined', 'total_xp'  # 🆕 NOUVEAUX CHAMPS
+            'challenges_joined', 'total_xp'
         ]
+    
+    def get_photo(self, obj):
+        """Retourne l'URL complète de la photo"""
+        if obj.photo:
+            # Si vous utilisez Cloudinary, l'URL est déjà complète
+            return obj.photo.url
+        return None
 
 class ProfileSerializer(serializers.ModelSerializer):
     """
