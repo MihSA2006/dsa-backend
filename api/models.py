@@ -1,84 +1,103 @@
 # api/models.py
 
 from django.db import models
-from django.core.validators import FileExtensionValidator
 from django.conf import settings
-import os
-
-from django.utils import timezone
-from django.core.mail import send_mail
-from django.urls import reverse
-import uuid
 from cloudinary.models import CloudinaryField
+
+import requests
+
+
+# ============================================================
+# ✅ Fonction utilitaire : lire un fichier texte Cloudinary UTF-8
+# ============================================================
+
+def read_cloudinary_text(file_field):
+    """
+    Lit correctement un fichier texte uploadé sur Cloudinary
+    (UTF-8 + accents + emojis) et normalise les retours à la ligne.
+    """
+    try:
+        if not file_field:
+            return ""
+
+        response = requests.get(file_field.url, timeout=10)
+
+        if response.status_code == 200:
+            # ✅ Décodage manuel UTF-8 (corrige le bug : ð§© RÃ¨gles)
+            text = response.content.decode("utf-8")
+
+            # ✅ Normaliser les sauts de ligne
+            return text.replace("\r\n", "\n").replace("\r", "\n")
+
+        return ""
+
+    except Exception:
+        return ""
+
+
+# ============================================================
+# ✅ MODEL : Challenge
+# ============================================================
 
 class Challenge(models.Model):
     """
     Modèle pour les challenges de programmation
     """
-    
+
     DIFFICULTY_CHOICES = [
         ('easy', 'Facile'),
         ('medium', 'Moyen'),
         ('hard', 'Difficile'),
     ]
-    
+
     # Informations de base
     title = models.CharField(max_length=200, verbose_name="Titre")
     slug = models.SlugField(max_length=200, unique=True, verbose_name="Slug")
+
     difficulty = models.CharField(
-        max_length=10, 
-        choices=DIFFICULTY_CHOICES, 
+        max_length=10,
+        choices=DIFFICULTY_CHOICES,
         default='easy',
         verbose_name="Niveau de difficulté"
     )
-    
-    # Description (fichier markdown)
+
+    # Description (markdown)
     description_file = CloudinaryField(
-        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
         verbose_name="Fichier description (markdown)"
     )
-    
+
     # Template initial
     template_file = CloudinaryField(
-        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
         verbose_name="Fichier template (.py)"
     )
-    
+
     # XP Reward
-    xp_reward = models.IntegerField(
-        default=100,
-        verbose_name="Points XP"
-    )
-    
-    # 🆕 NOUVEAU CHAMP : Nombre de participants
-    participants_count = models.IntegerField(
-        default=0,
-        verbose_name="Nombre de participants"
-    )
-    
+    xp_reward = models.IntegerField(default=100, verbose_name="Points XP")
+
+    # Nombre de participants
+    participants_count = models.IntegerField(default=0)
+
     xp_required = models.IntegerField(
         default=0,
-        verbose_name="XP minimum requis pour valider la soumission"
+        verbose_name="XP minimum requis"
     )
 
-    # Description PDF optionnelle
+    # PDF optionnel
     description_pdf = CloudinaryField(
-        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
-        verbose_name="Description en PDF"
+        verbose_name="Description PDF"
     )
 
     # Image optionnelle
     description_img = CloudinaryField(
-        # 'image',
         blank=True,
         null=True,
         verbose_name="Image de description"
@@ -87,238 +106,180 @@ class Challenge(models.Model):
     # Métadonnées
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=True, verbose_name="Actif")
-    
+    is_active = models.BooleanField(default=True)
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = "Challenge"
         verbose_name_plural = "Challenges"
-    
+
     def __str__(self):
-        return f"{self.title} ({self.get_difficulty_display()}) - {self.xp_reward} XP"
-    
+        return f"{self.title} ({self.get_difficulty_display()})"
+
+    # ✅ Lecture UTF-8 correcte
     def get_description(self):
-        """Lit et retourne le contenu du fichier description depuis Cloudinary"""
-        try:
-            if self.description_file:
-                import requests
-                response = requests.get(self.description_file.url, timeout=10)
-                if response.status_code == 200:
-                    # Normaliser les sauts de ligne
-                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
-            return ""
-        except Exception:
-            return ""
-    
+        return read_cloudinary_text(self.description_file)
+
     def get_template(self):
-        """Lit et retourne le contenu du fichier template depuis Cloudinary"""
-        try:
-            if self.template_file:
-                import requests
-                response = requests.get(self.template_file.url, timeout=10)
-                if response.status_code == 200:
-                    # Normaliser les sauts de ligne
-                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
-            return ""
-        except Exception:
-            return ""
-    
+        return read_cloudinary_text(self.template_file)
+
     def update_participants_count(self):
-        """Met à jour le nombre de participants"""
         self.participants_count = UserChallengeAttempt.objects.filter(
             challenge=self
         ).count()
         self.save(update_fields=['participants_count'])
-    
+
     def get_completion_rate(self):
-        """Retourne le taux de complétion"""
         if self.participants_count == 0:
             return 0
+
         completed = UserChallengeAttempt.objects.filter(
-            challenge=self, 
+            challenge=self,
             status='completed'
         ).count()
+
         return round((completed / self.participants_count) * 100, 2)
 
 
+# ============================================================
+# ✅ MODEL : TestCase
+# ============================================================
+
 class TestCase(models.Model):
     """
-    Modèle pour les cas de test d'un challenge
-    Chaque challenge peut avoir plusieurs test cases
+    Cas de test pour un challenge
     """
-    
+
     challenge = models.ForeignKey(
-        Challenge, 
-        on_delete=models.CASCADE, 
+        Challenge,
+        on_delete=models.CASCADE,
         related_name='test_cases'
     )
-    
-    # Fichiers input/output
+
     input_file = CloudinaryField(
-        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
         verbose_name="Fichier input (.txt)"
     )
-    
+
     output_file = CloudinaryField(
-        # 'file',
         resource_type='raw',
         blank=True,
         null=True,
         verbose_name="Fichier output (.txt)"
     )
-    
-    # Ordre d'affichage
-    order = models.IntegerField(default=0, verbose_name="Ordre")
-    
-    # Métadonnées
-    is_sample = models.BooleanField(
-        default=False, 
-        verbose_name="Exemple visible"
-    )
-    
+
+    order = models.IntegerField(default=0)
+    is_sample = models.BooleanField(default=False)
+
     class Meta:
         ordering = ['order']
         verbose_name = "Test Case"
         verbose_name_plural = "Test Cases"
-    
+
     def __str__(self):
         return f"Test {self.order} - {self.challenge.title}"
-    
-    def get_input(self):
-        """Lit et retourne le contenu du fichier input depuis Cloudinary"""
-        try:
-            if self.input_file:
-                import requests
-                response = requests.get(self.input_file.url, timeout=10)
-                if response.status_code == 200:
-                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
-                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
-            return ""
-        except Exception:
-            return ""
-    
-    def get_output(self):
-        """Lit et retourne le contenu du fichier output depuis Cloudinary"""
-        try:
-            if self.output_file:
-                import requests
-                response = requests.get(self.output_file.url, timeout=10)
-                if response.status_code == 200:
-                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
-                    return response.text.replace('\r\n', '\n').replace('\r', '\n')
-            return ""
-        except Exception:
-            return ""
 
-# 🆕 NOUVEAU MODÈLE
+    # ✅ Lecture UTF-8 correcte
+    def get_input(self):
+        return read_cloudinary_text(self.input_file)
+
+    def get_output(self):
+        return read_cloudinary_text(self.output_file)
+
+
+# ============================================================
+# ✅ MODEL : UserChallengeAttempt
+# ============================================================
+
 class UserChallengeAttempt(models.Model):
     """
-    Modèle pour tracker les tentatives des utilisateurs sur les challenges
+    Suivi des tentatives utilisateurs
     """
-    
+
     STATUS_CHOICES = [
         ('in_progress', 'En cours'),
         ('completed', 'Terminé'),
     ]
-    
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='challenge_attempts'
     )
+
     challenge = models.ForeignKey(
         Challenge,
         on_delete=models.CASCADE,
         related_name='user_attempts'
     )
-    
-    # Statut
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='in_progress',
-        verbose_name="Statut"
+        default='in_progress'
     )
-    
-    # Dates
-    started_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Date de début"
-    )
-    completed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name="Date de complétion"
-    )
-    
-    # Temps de résolution (en secondes)
-    completion_time = models.IntegerField(
-        null=True,
-        blank=True,
-        verbose_name="Temps de résolution (secondes)"
-    )
-    
-    # XP gagné
-    xp_earned = models.IntegerField(
-        default=0,
-        verbose_name="XP gagné"
-    )
-    
-    # Nombre de tentatives
-    attempts_count = models.IntegerField(
-        default=0,
-        verbose_name="Nombre de tentatives"
-    )
-    
+
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    completion_time = models.IntegerField(null=True, blank=True)
+
+    xp_earned = models.IntegerField(default=0)
+    attempts_count = models.IntegerField(default=0)
+
     class Meta:
         unique_together = ['user', 'challenge']
         ordering = ['-started_at']
-        verbose_name = "Tentative de Challenge"
-        verbose_name_plural = "Tentatives de Challenges"
-    
+
     def __str__(self):
-        return f"{self.user.username} - {self.challenge.title} ({self.get_status_display()})"
-    
+        return f"{self.user.username} - {self.challenge.title}"
+
     def mark_as_completed(self, xp_earned=0):
-        """Marque la tentative comme complétée et calcule le temps"""
         from django.utils import timezone
-        
+
         if self.status != 'completed':
             self.status = 'completed'
             self.completed_at = timezone.now()
-            
-            # Calculer le temps de résolution
-            time_diff = self.completed_at - self.started_at
-            self.completion_time = int(time_diff.total_seconds())
-            
-            # Attribuer les XP
+
+            # Calcul du temps
+            diff = self.completed_at - self.started_at
+            self.completion_time = int(diff.total_seconds())
+
             self.xp_earned = xp_earned
-            
             self.save()
-            
-            # Mettre à jour les stats de l'utilisateur
+
             if hasattr(self.user, 'update_stats'):
                 self.user.update_stats()
 
+
+# ============================================================
+# ✅ MODEL : UserCodeSave
+# ============================================================
+
 class UserCodeSave(models.Model):
+    """
+    Sauvegarde du code utilisateur
+    """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='saved_codes'
     )
+
     challenge = models.ForeignKey(
         Challenge,
         on_delete=models.CASCADE,
         related_name='saved_codes'
     )
+
     code = models.TextField()
     saved_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('user', 'challenge')  # 1 sauvegarde par pair user/challenge
+        unique_together = ('user', 'challenge')
 
     def __str__(self):
         return f"{self.user.username} — {self.challenge.title}"

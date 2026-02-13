@@ -14,6 +14,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+DEFAULT_CHARSET = "utf-8"
+FILE_CHARSET = "utf-8"
+
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
