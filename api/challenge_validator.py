@@ -116,37 +116,24 @@ class ChallengeValidator:
         return executor.execute(modified_code)
     
     def _inject_input(self, code: str, input_data: str) -> str:
-        """
-        Injecte les données d'input dans le code
-        
-        Args:
-            code: Le code original
-            input_data: Les données d'input (une par ligne)
-        
-        Returns:
-            Code modifié avec input injecté
-        """
+        # Normaliser l'indentation (remplacer les tabs par des espaces)
+        normalized_code = code.replace('\t', '    ')
         
         # Préparer les lignes d'input
-        input_lines = input_data.strip().split('\n')
-        
-        # Créer le code qui simule input()
         injected_code = f"""
-import sys
-from io import StringIO
+    import sys
+    from io import StringIO
 
-# Injecter l'input
-_input_data = {repr(input_data)}
-sys.stdin = StringIO(_input_data)
+    # Injecter l'input
+    _input_data = {repr(input_data)}
+    sys.stdin = StringIO(_input_data)
 
-# Code utilisateur
-{code}
-"""
-        
-        print("--------\nInjected Code : \n", injected_code)
+    # Code utilisateur
+    {normalized_code}
+    """
         
         return injected_code
-    
+
     def _compare_outputs(self, user_output: str, expected_output: str) -> bool:
         """
         Compare deux outputs en ignorant les espaces/lignes vides superflus
