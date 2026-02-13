@@ -377,6 +377,8 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             {'error': "Test case introuvable pour ce challenge"},
             status=status.HTTP_404_NOT_FOUND
         )
+    
+    print("---------\n---------\n---------\Test Case : \n", test_case)
 
     # Récupérer le code soumis par l'utilisateur
     try:

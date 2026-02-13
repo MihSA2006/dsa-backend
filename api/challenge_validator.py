@@ -143,6 +143,8 @@ sys.stdin = StringIO(_input_data)
 {code}
 """
         
+        print("--------\nInjected Code : \n", injected_code)
+        
         return injected_code
     
     def _compare_outputs(self, user_output: str, expected_output: str) -> bool:
