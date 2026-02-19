@@ -141,15 +141,15 @@ class ChallengeValidator:
         normalized_code = code.replace('\t', '    ')
         
         injected_code = f"""import sys
-    from io import StringIO
+from io import StringIO
 
-    # Injecter l'input
-    _input_data = {repr(input_data)}
-    sys.stdin = StringIO(_input_data)
+# Injecter l'input
+_input_data = {repr(input_data)}
+sys.stdin = StringIO(_input_data)
 
-    # Code utilisateur
-    {normalized_code}
-    """
+# Code utilisateur
+{normalized_code}
+"""
         
         print("-------------------\nCode with Input Injected : \n", injected_code)
         return injected_code
