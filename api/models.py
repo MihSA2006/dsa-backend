@@ -6,11 +6,6 @@ from cloudinary.models import CloudinaryField
 
 import requests
 
-
-# ============================================================
-# ✅ Fonction utilitaire : lire un fichier texte Cloudinary UTF-8
-# ============================================================
-
 def read_cloudinary_text(file_field):
     """
     Lit correctement un fichier texte uploadé sur Cloudinary
@@ -19,25 +14,15 @@ def read_cloudinary_text(file_field):
     try:
         if not file_field:
             return ""
-
         response = requests.get(file_field.url, timeout=10)
 
         if response.status_code == 200:
-            # ✅ Décodage manuel UTF-8 (corrige le bug : ð§© RÃ¨gles)
             text = response.content.decode("utf-8")
-
-            # ✅ Normaliser les sauts de ligne
             return text.replace("\r\n", "\n").replace("\r", "\n")
-
         return ""
 
     except Exception:
         return ""
-
-
-# ============================================================
-# ✅ MODEL : Challenge
-# ============================================================
 
 class Challenge(models.Model):
     """
@@ -116,7 +101,6 @@ class Challenge(models.Model):
     def __str__(self):
         return f"{self.title} ({self.get_difficulty_display()})"
 
-    # ✅ Lecture UTF-8 correcte
     def get_description(self):
         return read_cloudinary_text(self.description_file)
 
@@ -139,11 +123,6 @@ class Challenge(models.Model):
         ).count()
 
         return round((completed / self.participants_count) * 100, 2)
-
-
-# ============================================================
-# ✅ MODEL : TestCase
-# ============================================================
 
 class TestCase(models.Model):
     """
@@ -180,18 +159,12 @@ class TestCase(models.Model):
 
     def __str__(self):
         return f"Test {self.order} - {self.challenge.title}"
-
-    # ✅ Lecture UTF-8 correcte
+    
     def get_input(self):
         return read_cloudinary_text(self.input_file)
 
     def get_output(self):
         return read_cloudinary_text(self.output_file)
-
-
-# ============================================================
-# ✅ MODEL : UserChallengeAttempt
-# ============================================================
 
 class UserChallengeAttempt(models.Model):
     """
@@ -252,11 +225,6 @@ class UserChallengeAttempt(models.Model):
 
             if hasattr(self.user, 'update_stats'):
                 self.user.update_stats()
-
-
-# ============================================================
-# ✅ MODEL : UserCodeSave
-# ============================================================
 
 class UserCodeSave(models.Model):
     """

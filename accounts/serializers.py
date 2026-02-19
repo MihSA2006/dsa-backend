@@ -112,8 +112,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'photo', 'numero_inscription', 'parcours', 'classe',
             'challenges_joined', 'total_xp'
         ]
-from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
 
 class InitiatePasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -169,7 +167,7 @@ class EditProfileSerializer(serializers.ModelSerializer):
         """
         Vérifier que le numéro d'inscription n'est pas déjà utilisé par un autre utilisateur
         """
-        user = self.instance  # L'utilisateur actuel
+        user = self.instance
         if User.objects.filter(numero_inscription=value).exclude(id=user.id).exists():
             raise serializers.ValidationError("Ce numéro d'inscription est déjà utilisé.")
         return value
@@ -200,6 +198,3 @@ class EditProfileSerializer(serializers.ModelSerializer):
         if instance.photo:
             data['photo'] = instance.photo.url
         return data
-    
-
-    

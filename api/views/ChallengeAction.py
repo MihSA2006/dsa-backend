@@ -1,7 +1,5 @@
 from rest_framework.response import Response
 from rest_framework import status
-
-
 from api.models import Challenge, TestCase
 from api.serializers import (
     UserChallengeAttemptSerializer
@@ -19,7 +17,6 @@ User = get_user_model()
 
 import logging
 
-# Configuration du logger
 logger = logging.getLogger(__name__)
 
 
@@ -95,9 +92,6 @@ def validate_code_security(code):
 
 
 
-##################################################################################################
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def join_challenge(request, challenge_id):
@@ -110,8 +104,6 @@ def join_challenge(request, challenge_id):
     challenge = get_challenge_active(challenge_id)
     if isinstance(challenge, Response):
         return challenge
-    
-    
     
     # Vérifier si l'utilisateur a déjà rejoint ce challenge
     attempt, created = UserChallengeAttempt.objects.get_or_create(
@@ -137,11 +129,6 @@ def join_challenge(request, challenge_id):
             'message': False,
             # 'attempt': UserChallengeAttemptSerializer(attempt).data
         }, status=status.HTTP_200_OK)
-    
-
-
-
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -369,7 +356,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    print("---------\n---------\n---------\Test Case : \n", test_case)
+    # print("---------\n---------\n---------Test Case : \n", test_case)
 
     # Récupérer le code soumis par l'utilisateur
     try:
@@ -377,7 +364,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
     
-    print("---------\n---------\n---------\nCode : \n", code)
+    # print("---------\n---------\n---------\nCode : \n", code)
 
 
     # Vérifier la sécurité du code
@@ -395,7 +382,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             'order': test_case.order
         }])
 
-        print("----------------\n Result : \n", result)
+        # print("----------------\n Result : \n", result)
 
         # Ajouter un message clair pour le frontend selon succès/échec
         if result['success']:
@@ -412,8 +399,6 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             {'success': False, 'error': f"Erreur serveur : {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

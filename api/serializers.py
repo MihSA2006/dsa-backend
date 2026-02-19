@@ -49,7 +49,6 @@ class CodeExecutionSerializer(serializers.Serializer):
         
         return value
 
-
 class CodeExecutionResponseSerializer(serializers.Serializer):
     """
     Serializer pour formater la réponse de l'exécution
@@ -77,7 +76,6 @@ class TestCaseSerializer(serializers.ModelSerializer):
             try:
                 response = requests.get(obj.input_file.url, timeout=10)
                 if response.status_code == 200:
-                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
                     content = response.text.replace('\r\n', '\n').replace('\r', '\n')
                     return content
                 return f"[Erreur lecture input: HTTP {response.status_code}]"
@@ -91,7 +89,6 @@ class TestCaseSerializer(serializers.ModelSerializer):
             try:
                 response = requests.get(obj.output_file.url, timeout=10)
                 if response.status_code == 200:
-                    # ✅ NORMALISER LES SAUTS DE LIGNE : \r\n → \n
                     content = response.text.replace('\r\n', '\n').replace('\r', '\n')
                     return content
                 return f"[Erreur lecture output: HTTP {response.status_code}]"
@@ -158,7 +155,6 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
     test_cases = TestCaseSerializer(many=True, read_only=True)
     join = serializers.SerializerMethodField()
 
-    # 🔥 nouveaux champs ajoutés
     started_at = serializers.SerializerMethodField()
     completed_at = serializers.SerializerMethodField()
     completion_time = serializers.SerializerMethodField()
@@ -307,11 +303,6 @@ class ChallengeDetailSerializer(serializers.ModelSerializer):
         attempt = self._get_attempt(obj)
         return attempt.completion_time if attempt else None
 
-
-
-
-
-
 class ChallengeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Challenge
@@ -321,7 +312,6 @@ class ChallengeCreateSerializer(serializers.ModelSerializer):
             'template_file', 'xp_reward'
         ]
 
-    
     def validate_slug(self, value):
         """Valide que le slug est unique"""
         if Challenge.objects.filter(slug=value).exists():
@@ -351,10 +341,6 @@ class ChallengeSubmissionSerializer(serializers.Serializer):
             raise serializers.ValidationError("Challenge introuvable")
         return value
     
-
-
-
-
 class UserChallengeAttemptSerializer(serializers.ModelSerializer):
     """Serializer pour les tentatives de challenge"""
     challenge_title = serializers.CharField(source='challenge.title', read_only=True)
@@ -369,7 +355,6 @@ class UserChallengeAttemptSerializer(serializers.ModelSerializer):
             'xp_earned', 'xp_reward', 'attempts_count'
         ]
         read_only_fields = ['started_at', 'completed_at', 'completion_time', 'xp_earned']
-
 
 class ChallengeStatsSerializer(serializers.ModelSerializer):
     """Serializer avec statistiques du challenge"""
@@ -433,4 +418,4 @@ class GlobalLeaderboardSerializer(serializers.Serializer):
     total_xp = serializers.IntegerField()
     challenges_joined = serializers.IntegerField()
     challenges_completed = serializers.IntegerField()
-    total_completion_time = serializers.IntegerField(allow_null=True)  # ✅ AJOUT
+    total_completion_time = serializers.IntegerField(allow_null=True)

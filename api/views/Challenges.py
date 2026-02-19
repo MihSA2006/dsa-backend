@@ -4,7 +4,6 @@ from rest_framework import status
 from rest_framework import status, viewsets
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
-
 from api.models import Challenge, TestCase
 from api.serializers import (
     ChallengeListSerializer,
@@ -13,8 +12,6 @@ from api.serializers import (
     TestCaseCreateSerializer,
     ChallengeStatsSerializer
 )
-
-
 from django.db.models import Q
 
 class ChallengeViewSet(viewsets.ModelViewSet):
@@ -68,19 +65,18 @@ class ChallengeViewSet(viewsets.ModelViewSet):
         """
         Récupère le détail d'un challenge
         
-        🔒 CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer
+        CONTRAINTE ACTIVABLE : Décommentez le bloc ci-dessous pour bloquer
         complètement l'accès aux challenges dans des contests À VENIR
         """
-        # ==================== DÉBUT CONTRAINTE GLOBALE ====================
         from contests.models import Contest
         
         # Vérifier si le challenge est dans un contest À VENIR
         challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
         
-        # ✅ Seulement bloquer si le contest est À VENIR (pas "ongoing" ou "finished")
+        # Seulement bloquer si le contest est À VENIR (pas "ongoing" ou "finished")
         in_upcoming_contest = Contest.objects.filter(
             challenges=challenge,
-            statut='upcoming'  # 🔥 Seulement "à venir"
+            statut='upcoming' 
         ).exists()
         
         if in_upcoming_contest:
@@ -90,7 +86,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
                 'contest_status': 'upcoming',
                 'message': 'Les détails de ce challenge seront accessibles une fois le contest commencé'
             }, status=status.HTTP_403_FORBIDDEN)
-        # ==================== FIN CONTRAINTE GLOBALE ====================
         
         challenge = get_object_or_404(Challenge, pk=pk, is_active=True)
         serializer = ChallengeDetailSerializer(challenge, context={'request': request})
@@ -107,8 +102,6 @@ class ChallengeViewSet(viewsets.ModelViewSet):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
-
 class TestCaseViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour gérer les test cases

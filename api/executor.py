@@ -6,12 +6,11 @@ import time
 import sys
 from typing import Dict, Any
 import uuid
-# Import conditionnel de resource (seulement sur Linux/Mac)
+
 try:
     import resource
     HAS_RESOURCE = True
 except ImportError:
-    # Windows n'a pas le module resource
     HAS_RESOURCE = False
 
 
@@ -22,7 +21,7 @@ class CodeExecutor:
     """
     
     # Timeout par défaut (en secondes)
-    DEFAULT_TIMEOUT = 5
+    DEFAULT_TIMEOUT = 10
     
     # Limite de mémoire (en bytes) - 128 MB
     MEMORY_LIMIT = 128 * 1024 * 1024
@@ -95,6 +94,7 @@ class CodeExecutor:
                 prefix=f'code_exec_{self.execution_id}_'
             )
             print(f"[EXEC-{self.execution_id}] Répertoire : {temp_dir}")
+
             # script_path = os.path.join(temp_dir, 'script.py')
             script_path = os.path.join(temp_dir, f'script_{self.execution_id}.py')
             
@@ -113,7 +113,7 @@ class CodeExecutor:
             
             # 5. Exécuter le code
             print("[EXEC] Lancement du subprocess...")
-            if HAS_RESOURCE and os.name == 'posix':  # Linux/Mac
+            if HAS_RESOURCE and os.name == 'posix':
                 result = subprocess.run(
                     command,
                     capture_output=True,

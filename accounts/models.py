@@ -6,10 +6,6 @@ import uuid
 from cloudinary.models import CloudinaryField
 
 class User(AbstractUser):
-    # Les champs de AbstractUser inclus par défaut : 
-    # username, email, password, first_name, last_name, etc.
-    
-    # Vos champs personnalisés
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
     photo = CloudinaryField('image', blank=True, null=True)
@@ -33,9 +29,8 @@ class User(AbstractUser):
     parcours = models.CharField(max_length=50, choices=PARCOURS_CHOICES, default='Common Core')
     
     # Champs supplémentaires utiles
-    email = models.EmailField(unique=True)  # Rendre email unique
+    email = models.EmailField(unique=True)
     
-    # 🆕 NOUVEAUX CHAMPS
     challenges_joined = models.IntegerField(
         default=0, 
         verbose_name="Nombre de challenges rejoints"

@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticated
-from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
@@ -12,11 +11,11 @@ from .serializers import (
     CompleteRegistrationSerializer,
     UserSerializer,
     ProfileSerializer,
-    UserProfileSerializer,
     CompletePasswordResetSerializer,
     InitiatePasswordResetSerializer,
     EditProfileSerializer
 )
+from .models import PasswordResetToken
 
 from api.models import UserChallengeAttempt
 from django.shortcuts import redirect
@@ -36,7 +35,10 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
 from django.template.loader import render_to_string
-from .email_utils import send_email_sendgrid  # ✅ NOUVELLE IMPORT
+from .email_utils import send_email_sendgrid 
+
+from django.shortcuts import render
+from django.http import JsonResponse
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
@@ -87,62 +89,6 @@ def initiate_registration(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# @api_view(['POST'])
-# @permission_classes([IsAdminUser])
-# def initiate_registration(request):
-#     """
-#     Vue pour l'admin qui initie l'inscription.
-#     L'admin envoie seulement l'email.
-#     """
-#     serializer = InitiateRegistrationSerializer(data=request.data)
-    
-#     if serializer.is_valid():
-#         email = serializer.validated_data['email']
-        
-#         # Supprimer l'ancien token si existe
-#         RegistrationToken.objects.filter(email=email).delete()
-        
-#         # Créer un nouveau token
-#         token = RegistrationToken.objects.create(
-#             email=email,
-#             expires_at=timezone.now() + timedelta(hours=48)  # Valide 48h
-#         )
-        
-#         # Créer le lien d'inscription
-#         registration_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/register/?token={token.token}"
-        
-#         # Sujet de l'email
-#         subject = "Invitation à compléter votre inscription"
-
-#         # 🔹 Charger le template HTML et injecter le lien
-#         html_content = render_to_string('mail.html', {
-#             'registration_link': registration_link
-#         })
-
-#         # 🔹 Envoyer l'email au format HTML
-#         email_message = EmailMultiAlternatives(
-#             subject,
-#             "",  # Version texte (facultatif)
-#             settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@example.com',
-#             [email]
-#         )
-#         email_message.attach_alternative(html_content, "text/html")
-#         email_message.send()
-        
-#         return Response({
-#             'message': 'Email d\'invitation envoyé avec succès.',
-#             'email': email,
-#             'token': str(token.token)  # Pour tests avec Postman
-#         }, status=status.HTTP_201_CREATED)
-    
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
-from .models import PasswordResetToken
-
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def initiate_password_reset(request):
@@ -188,7 +134,7 @@ def initiate_password_reset(request):
         return Response({
             'message': 'Email de réinitialisation envoyé avec succès.',
             'email': email,
-            'token': str(token.token)  # Pour tests avec Postman
+            'token': str(token.token)
         }, status=status.HTTP_201_CREATED)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -276,11 +222,6 @@ def complete_password_reset(request):
         'errors': serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-
-
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def verify_token(request):
@@ -297,7 +238,6 @@ def verify_token(request):
         token = RegistrationToken.objects.get(token=token_value)
 
         if token.is_valid():
-            # 🔁 Redirection vers le frontend avec le token
             frontend_url = f"https://dsa-kohl-one.vercel.app/register?token={token_value}"
             return redirect(frontend_url)
         
@@ -306,9 +246,6 @@ def verify_token(request):
 
     except RegistrationToken.DoesNotExist:
         return Response({'error': 'Token invalide.'}, status=status.HTTP_404_NOT_FOUND)
-
-
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -328,10 +265,6 @@ def complete_registration(request):
         'errors': serializer.errors
     }, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def list_users(request):
@@ -339,7 +272,6 @@ def list_users(request):
     users = User.objects.all()
     serializer = UserSerializer(users, many=True, context={'request': request})
     return Response(serializer.data)
-
 
 @api_view(['GET', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
@@ -356,7 +288,6 @@ def profile(request):
         serializer = ProfileSerializer(user)
         return Response(serializer.data)
 
-    # PUT ou PATCH
     partial = (request.method == 'PATCH')
     serializer = ProfileSerializer(user, data=request.data, partial=partial)
     if serializer.is_valid():
@@ -373,7 +304,7 @@ def is_admin(request):
     """
     user = request.user
     return Response({
-        "is_admin": user.is_superuser  # True / False
+        "is_admin": user.is_superuser
     })
 
 @api_view(['GET'])
@@ -434,7 +365,7 @@ def get_user_profile_with_stats(request, user_id):
 
 
 @api_view(['POST'])
-@permission_classes([])  # pas besoin d’être connecté
+@permission_classes([])
 def verify_refresh_token(request):
     """
     Vérifie si un refresh token JWT est encore valide.
@@ -446,14 +377,14 @@ def verify_refresh_token(request):
         return Response({"detail": "Refresh token manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        RefreshToken(token)  # essaie de décoder et valider le token
+        RefreshToken(token)
         return Response({"valid": True}, status=status.HTTP_200_OK)
     except TokenError:
         return Response({"valid": False}, status=status.HTTP_200_OK)
     
 
 @api_view(['POST'])
-@permission_classes([])  # Pas besoin d’être authentifié
+@permission_classes([])
 def verify_access_token(request):
     """
     Vérifie si un access token JWT est encore valide.
@@ -465,21 +396,13 @@ def verify_access_token(request):
         return Response({"detail": "Access token manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        AccessToken(token)  # Essaie de décoder et vérifier la validité du token
+        AccessToken(token)
         return Response({"valid": True}, status=status.HTTP_200_OK)
     except TokenError:
         return Response({"valid": False}, status=status.HTTP_200_OK)
 
-
-
-from django.shortcuts import render
-from django.http import JsonResponse
-
-
 def custom_404_view(request, exception):
     return render(request, '404.html', status=404)
-
-
 
 def custom_404_api(request, exception=None):
     return JsonResponse({
@@ -487,7 +410,6 @@ def custom_404_api(request, exception=None):
         "error": "URL not found",
         "message": "La route demandée n'existe pas."
     }, status=404)
-
 
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
@@ -505,7 +427,6 @@ def edit_profile(request):
     """
     user = request.user
     
-    # PATCH pour mise à jour partielle, PUT pour complète
     partial = (request.method == 'PATCH')
     
     serializer = EditProfileSerializer(

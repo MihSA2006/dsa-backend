@@ -19,7 +19,6 @@ from .views import (
     test_specific_test_case,
     save_code,
 
-
     # Leaderboards
     challenge_leaderboard,
     global_leaderboard,
@@ -46,23 +45,15 @@ urlpatterns = [
     path('challenges/<int:challenge_id>/join/', join_challenge, name='join-challenge'),
     path('challenges/<int:challenge_id>/test/', test_challenge_solution, name='test-challenge'),
     path('challenges/<int:challenge_id>/test-case/<int:test_case_id>/',test_specific_test_case,name='test-specific-testcase'),
-
     path('challenges/<int:challenge_id>/submit/', submit_challenge_solution, name='submit-challenge'),
     path('challenges/my-challenges/', my_challenges, name='my-challenges'),
-
-
     path('challenges/<int:challenge_id>/save-code/', save_code, name='save-code'),
 
-    
     # Leaderboards
     path('challenges/<int:challenge_id>/leaderboard/', challenge_leaderboard, name='challenge-leaderboard'),
     path('leaderboard/global/', global_leaderboard, name='global-leaderboard'),
     path('my-stats/', my_stats, name='my-stats'),
 
-
-
-    
     # Routes du router
     path('', include(router.urls)),
-
 ]

@@ -11,7 +11,7 @@ class SecurityChecker:
     # Imports interdits (dangereux pour le système)
     FORBIDDEN_IMPORTS = [
         'os',           # Accès système de fichiers
-        # 'sys',          # Accès système
+        'sys',          # Accès système
         'subprocess',   # Exécution de commandes
         'socket',       # Connexions réseau
         'requests',     # Requêtes HTTP

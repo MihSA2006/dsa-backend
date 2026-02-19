@@ -1,26 +1,21 @@
 from rest_framework.response import Response
 from rest_framework import status
-
 from api.models import Challenge
 from api.serializers import (
     ChallengeLeaderboardSerializer,
     GlobalLeaderboardSerializer
 )
-
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q, Count, Case, When, IntegerField, Sum
 from django.contrib.auth import get_user_model
 from api.models import UserChallengeAttempt
-
-
 User = get_user_model()
 
 import logging
 
 # Configuration du logger
 logger = logging.getLogger(__name__)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -111,17 +106,16 @@ def global_leaderboard(request):
             'challenge_attempts',
             filter=Q(challenge_attempts__status='completed')
         ),
-        # ✅ AJOUT : Temps total de complétion (somme de tous les temps)
         total_completion_time=Sum(
             'challenge_attempts__completion_time',
             filter=Q(challenge_attempts__status='completed')
         )
     ).filter(
-        total_xp__gt=0  # Seulement les utilisateurs avec XP > 0
+        total_xp__gt=0
     ).order_by(
-        '-total_xp',           # 1. XP décroissant (plus = mieux)
-        'total_completion_time',  # 2. Temps croissant (moins = mieux)
-        'username'             # 3. Nom alphabétique (départage final)
+        '-total_xp',           
+        'total_completion_time', 
+        'username'             
     )
     
     # Construire les données du leaderboard
@@ -131,7 +125,7 @@ def global_leaderboard(request):
     prev_time = None
     
     for idx, user in enumerate(users, 1):
-        # ✅ Le rang change si XP différent OU temps différent
+        # Le rang change si XP différent OU temps différent
         if user.total_xp != prev_xp or user.total_completion_time != prev_time:
             rank = idx
             prev_xp = user.total_xp
@@ -146,7 +140,7 @@ def global_leaderboard(request):
             'total_xp': user.total_xp,
             'challenges_joined': user.challenges_joined,
             'challenges_completed': user.challenges_completed,
-            'total_completion_time': user.total_completion_time  # ✅ Ajout pour transparence
+            'total_completion_time': user.total_completion_time
         })
     
     serializer = GlobalLeaderboardSerializer(leaderboard_data, many=True)
@@ -160,24 +154,42 @@ def global_leaderboard(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_stats(request):
-    """
-    Retourne les statistiques de l'utilisateur connecté
-    
-    GET /api/my-stats/
-    """
-    
     user = request.user
     
-    # Récupérer les tentatives
     attempts = UserChallengeAttempt.objects.filter(user=user)
     completed = attempts.filter(status='completed')
     
-    # Calculer le temps total de complétion
     total_completion_time = completed.aggregate(
         total=Sum('completion_time')
     )['total'] or 0
-    
-    # Calculer les statistiques
+
+    users_ranked = User.objects.annotate(
+        total_completion_time=Sum(
+            'challenge_attempts__completion_time',
+            filter=Q(challenge_attempts__status='completed')
+        )
+    ).filter(
+        total_xp__gt=0
+    ).order_by(
+        '-total_xp',
+        'total_completion_time',
+        'username'
+    )
+
+    global_rank = 1
+    rank = 1
+    prev_xp = None
+    prev_time = None
+
+    for idx, u in enumerate(users_ranked, 1):
+        if u.total_xp != prev_xp or u.total_completion_time != prev_time:
+            rank = idx
+            prev_xp = u.total_xp
+            prev_time = u.total_completion_time
+        if u.id == user.id:
+            global_rank = rank
+            break
+
     stats = {
         'user': {
             'id': user.id,
@@ -198,13 +210,7 @@ def my_stats(request):
             )
         },
         'ranking': {
-            'global_rank': User.objects.filter(
-                Q(total_xp__gt=user.total_xp) |
-                Q(
-                    total_xp=user.total_xp,
-                    challenge_attempts__completion_time__lt=total_completion_time
-                )
-            ).distinct().count() + 1,
+            'global_rank': global_rank,
             'total_users': User.objects.filter(total_xp__gt=0).count()
         },
         'performance': {
