@@ -115,13 +115,32 @@ class ChallengeValidator:
         # return self.executor.execute(modified_code)
         return executor.execute(modified_code)
     
+    # def _inject_input(self, code: str, input_data: str) -> str:
+    #     # Normaliser l'indentation (remplacer les tabs par des espaces)
+    #     normalized_code = code.replace('\t', '    ')
+        
+    #     # Préparer les lignes d'input
+    #     injected_code = f"""
+    # import sys
+    # from io import StringIO
+
+    # # Injecter l'input
+    # _input_data = {repr(input_data)}
+    # sys.stdin = StringIO(_input_data)
+
+    # # Code utilisateur
+    # {normalized_code}
+    # """
+        
+    #     print("-------------------\nCode with Input Injected : \n",injected_code)
+
+    #     return injected_code
+
     def _inject_input(self, code: str, input_data: str) -> str:
         # Normaliser l'indentation (remplacer les tabs par des espaces)
         normalized_code = code.replace('\t', '    ')
         
-        # Préparer les lignes d'input
-        injected_code = f"""
-    import sys
+        injected_code = f"""import sys
     from io import StringIO
 
     # Injecter l'input
@@ -132,8 +151,7 @@ class ChallengeValidator:
     {normalized_code}
     """
         
-        print("-------------------\nCode with Input Injected : \n",injected_code)
-
+        print("-------------------\nCode with Input Injected : \n", injected_code)
         return injected_code
 
     def _compare_outputs(self, user_output: str, expected_output: str) -> bool:
