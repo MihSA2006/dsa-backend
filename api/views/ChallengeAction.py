@@ -56,15 +56,6 @@ def get_code(request):
         raise ValueError("Le code est requis")
     return code
 
-from rest_framework.response import Response
-from rest_framework import status
-
-def get_code(request):
-    code = request.data.get('code')
-    if not code:
-        raise ValueError("Le code est requis")
-    return code
-
 
 def get_test_cases(challenge):
     test_cases = challenge.test_cases.all()
@@ -378,7 +369,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # print("---------\n---------\n---------\Test Case : \n", test_case)
+    print("---------\n---------\n---------\Test Case : \n", test_case)
 
     # Récupérer le code soumis par l'utilisateur
     try:
@@ -386,7 +377,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
     
-    # print("---------\n---------\n---------\nCode : \n", code)
+    print("---------\n---------\n---------\nCode : \n", code)
 
 
     # Vérifier la sécurité du code
@@ -404,7 +395,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             'order': test_case.order
         }])
 
-        # print("----------------\n Result : \n", result)
+        print("----------------\n Result : \n", result)
 
         # Ajouter un message clair pour le frontend selon succès/échec
         if result['success']:
