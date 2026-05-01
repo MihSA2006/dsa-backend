@@ -70,7 +70,7 @@ class ContestAdmin(admin.ModelAdmin):
                 '<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />',
                 obj.contest_img.url
             )
-        return format_html('<span style="color: #999;">Pas d\'image</span>')
+        return mark_safe('<span style="color: #999;">Pas d\'image</span>')
     contest_image_thumb.short_description = 'Image'
     
     def contest_image_preview(self, obj):
@@ -80,7 +80,7 @@ class ContestAdmin(admin.ModelAdmin):
                 '<img src="{}" style="max-width: 300px; max-height: 300px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />',
                 obj.contest_img.url
             )
-        return format_html('<span style="color: #999;">Aucune image uploadée</span>')
+        return mark_safe('<span style="color: #999;">Aucune image uploadée</span>')
     contest_image_preview.short_description = 'Aperçu de l\'image'
     
     def statut_badge(self, obj):
