@@ -296,7 +296,11 @@ class Team(models.Model):
         )
         
         self.xp_total = sum(sub.xp_earned for sub in submissions)
-        self.temps_total = sum(sub.temps_soumission for sub in submissions)
+        if submissions:
+            self.temps_total = max(sub.temps_soumission for sub in submissions)
+        else:
+            self.temps_total = 0
+            
         self.save(update_fields=['xp_total', 'temps_total'])
 
 class TeamInvitation(models.Model):

@@ -135,10 +135,14 @@ def delete_team(request, team_id):
 def invite_member(request, team_id):
     """
     POST /api/teams/{team_id}/invite/
-    Envoie une invitation par email à un membre pour rejoindre l'équipe
+    Envoie une ou plusieurs invitations à des membres pour rejoindre l'équipe
     
     Body: {
         "user_email": "user@example.com"
+    }
+    ou 
+    Body: {
+        "emails": ["user1@example.com", "user2@example.com"]
     }
     """
     team = get_object_or_404(Team, pk=team_id)
@@ -150,89 +154,68 @@ def invite_member(request, team_id):
             status=status.HTTP_403_FORBIDDEN
         )
     
-    user_email = request.data.get('user_email')
-    if not user_email:
+    # Récupérer les emails (soit un seul, soit une liste)
+    emails = request.data.get('emails')
+    single_email = request.data.get('user_email')
+    
+    if not emails and not single_email:
         return Response(
-            {'error': 'user_email est requis'},
+            {'error': 'user_email ou emails est requis'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Validation basique de l'email
-    if '@' not in user_email:
+    if single_email and not emails:
+        emails = [single_email]
+    elif not isinstance(emails, list):
         return Response(
-            {'error': 'Format d\'email invalide'},
+            {'error': 'Le champ emails doit être une liste'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     from accounts.models import User
+    results = []
     
-    # Rechercher l'utilisateur par email
-    try:
-        user = User.objects.get(email=user_email)
-    except User.DoesNotExist:
-        return Response(
-            {'error': f'Aucun utilisateur trouvé avec l\'email {user_email}'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    # Vérifier que l'utilisateur n'invite pas lui-même
-    if user == request.user:
-        return Response(
-            {'error': 'Vous ne pouvez pas vous inviter vous-même'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Vérifier si l'utilisateur peut être ajouté
-    can_add, message = team.can_add_member(user)
-    if not can_add:
-        return Response(
-            {'error': message},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Vérifier s'il y a déjà une invitation en attente
-    existing_invitation = TeamInvitation.objects.filter(
-        team=team,
-        invitee=user,
-        status='pending'
-    ).first()
-    
-    if existing_invitation and existing_invitation.is_valid():
-        return Response(
-            {'error': f'Une invitation est déjà en attente pour {user.username}'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Créer l'invitation
-    invitation = TeamInvitation.objects.create(
-        team=team,
-        inviter=request.user,
-        invitee=user
-    )
-    
-    # Envoyer l'email
-    email_sent = send_team_invitation_email(invitation, request)
-    
-    if email_sent:
-        return Response({
-            'success': True,
-            'message': f'Une invitation a été envoyée à {user.email}',
-            'invitation': TeamInvitationSerializer(invitation).data,
-            'user': {
-                'id': user.id,
+    for email in emails:
+        # Validation basique
+        if '@' not in email:
+            results.append({'email': email, 'status': 'error', 'message': 'Format d\'email invalide'})
+            continue
+            
+        try:
+            user = User.objects.get(email=email)
+            
+            # Vérifications
+            if user == request.user:
+                results.append({'email': email, 'status': 'error', 'message': 'Auto-invitation interdite'})
+                continue
+                
+            can_add, message = team.can_add_member(user)
+            if not can_add:
+                results.append({'email': email, 'status': 'error', 'message': message})
+                continue
+                
+            existing = TeamInvitation.objects.filter(team=team, invitee=user, status='pending').first()
+            if existing and existing.is_valid():
+                results.append({'email': email, 'status': 'error', 'message': 'Invitation déjà en attente'})
+                continue
+            
+            # Création
+            invitation = TeamInvitation.objects.create(team=team, inviter=request.user, invitee=user)
+            results.append({
+                'email': email, 
+                'status': 'success', 
                 'username': user.username,
-                'email': user.email,
-                'nom': user.nom,
-                'prenom': user.prenom
-            }
-        }, status=status.HTTP_201_CREATED)
-    else:
-        # Supprimer l'invitation si l'email n'a pas pu être envoyé
-        invitation.delete()
-        return Response(
-            {'error': 'Erreur lors de l\'envoi de l\'email'},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+                'invitation': TeamInvitationSerializer(invitation).data
+            })
+            
+        except User.DoesNotExist:
+            results.append({'email': email, 'status': 'error', 'message': 'Utilisateur non trouvé'})
+            
+    return Response({
+        'team_id': team.id,
+        'team_name': team.nom,
+        'results': results
+    }, status=status.HTTP_200_OK)
 
 
 @api_view(['POST', 'GET'])

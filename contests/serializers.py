@@ -121,7 +121,7 @@ class TeamInvitationSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'team', 'team_name', 'contest_name',
             'inviter', 'inviter_name', 'invitee', 'invitee_name',
-            'status', 'created_at', 'expires_at', 'responded_at',
+            'token', 'status', 'created_at', 'expires_at', 'responded_at',
             'is_valid'
         ]
         read_only_fields = ['token', 'status', 'responded_at']
