@@ -115,6 +115,7 @@ class TeamInvitationSerializer(serializers.ModelSerializer):
     team_name = serializers.CharField(source='team.nom', read_only=True)
     contest_name = serializers.CharField(source='team.contest.title', read_only=True)
     is_valid = serializers.SerializerMethodField()
+    message = serializers.SerializerMethodField()
     
     class Meta:
         model = TeamInvitation
@@ -122,12 +123,18 @@ class TeamInvitationSerializer(serializers.ModelSerializer):
             'id', 'team', 'team_name', 'contest_name',
             'inviter', 'inviter_name', 'invitee', 'invitee_name',
             'token', 'status', 'created_at', 'expires_at', 'responded_at',
-            'is_valid'
+            'is_valid', 'message'
         ]
         read_only_fields = ['token', 'status', 'responded_at']
     
     def get_is_valid(self, obj):
         return obj.is_valid()
+
+    def get_message(self, obj):
+        inviter = obj.inviter.username if obj.inviter else "Quelqu'un"
+        team = obj.team.nom if obj.team else "une équipe"
+        contest = obj.team.contest.title if obj.team and obj.team.contest else "un concours"
+        return f"{inviter} vous invite à rejoindre l'équipe {team} pour le contest {contest}."
 
 
 class TeamDetailSerializer(serializers.ModelSerializer):

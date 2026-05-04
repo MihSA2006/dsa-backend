@@ -312,18 +312,23 @@ def decline_invitation(request, token):
 def my_invitations(request):
     """
     GET /api/invitations/me/
-    Liste les invitations reçues par l'utilisateur connecté
+    Récupère l'invitation la plus récente reçue par l'utilisateur connecté
     """
     invitations = TeamInvitation.objects.filter(
         invitee=request.user
-    ).select_related('team', 'team__contest', 'inviter')
+    ).select_related('team', 'team__contest', 'inviter').order_by('-created_at')
     
     # Filtrer par statut si demandé
     status_filter = request.query_params.get('status')
     if status_filter:
         invitations = invitations.filter(status=status_filter)
     
-    serializer = TeamInvitationSerializer(invitations, many=True)
+    invitation = invitations.first()
+    
+    if not invitation:
+        return Response(None)
+        
+    serializer = TeamInvitationSerializer(invitation)
     return Response(serializer.data)
 
 
