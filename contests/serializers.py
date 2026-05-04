@@ -134,7 +134,7 @@ class TeamInvitationSerializer(serializers.ModelSerializer):
         inviter = obj.inviter.username if obj.inviter else "Quelqu'un"
         team = obj.team.nom if obj.team else "une équipe"
         contest = obj.team.contest.title if obj.team and obj.team.contest else "un concours"
-        return f"{inviter} vous invite à rejoindre l'équipe {team} pour le contest {contest}."
+        return f"{inviter} invites you to join the {team} team for the {contest} contest."
 
 
 class TeamDetailSerializer(serializers.ModelSerializer):
