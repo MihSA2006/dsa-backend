@@ -246,7 +246,14 @@ def accept_invitation(request, token):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     try:
+        # Sauvegarder les informations pour le cleanup
+        invitee = invitation.invitee
+        contest = invitation.team.contest
+
         invitation.accept()
+        
+        # Supprimer toutes les autres invitations de cet utilisateur pour ce contest (même déjà acceptées)
+        TeamInvitation.objects.filter(invitee=invitee, team__contest=contest).exclude(id=invitation.id).delete()
         
         return Response({
             'success': True,
@@ -293,11 +300,15 @@ def decline_invitation(request, token):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        invitation.decline()
+        # Stocker le nom de l'équipe avant suppression
+        team_nom = invitation.team.nom
+        
+        # Supprimer l'invitation au lieu de simplement la décliner
+        invitation.delete()
         
         return Response({
             'success': True,
-            'message': f'Vous avez refusé l\'invitation à rejoindre l\'équipe {invitation.team.nom}'
+            'message': f'Vous avez refusé l\'invitation à rejoindre l\'équipe {team_nom}'
         }, status=status.HTTP_200_OK)
         
     except ValidationError as e:
