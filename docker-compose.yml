@@ -36,7 +36,7 @@ services:
 
   nextjs:
     build:
-      context: ./dsa
+      context: ./dsa_front
       dockerfile: Dockerfile
     environment:
       - API_URL=http://django:8888/api
