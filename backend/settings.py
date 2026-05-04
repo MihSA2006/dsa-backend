@@ -159,6 +159,9 @@ SIMPLE_JWT = {
 SENDGRID_API_KEY = config("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="misandratra.harena3@gmail.com")
 
+FRONTEND_URL = config("FRONTEND_URL")
+BACKEND_URL = config("BACKEND_URL")
+
 AUTH_USER_MODEL = 'accounts.User'
 
 HANDLER404 = 'accounts.views.custom_404_view'

@@ -62,7 +62,7 @@ def initiate_registration(request):
         )
         
         # Créer le lien d'inscription
-        registration_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/register/?token={token.token}"
+        registration_link = f"{settings.BACKEND_URL}/api/accounts/verify-back/register/?token={token.token}"
         
         subject = "Invitation à compléter votre inscription"
         html_content = render_to_string('mail.html', {
@@ -111,7 +111,7 @@ def initiate_password_reset(request):
         )
         
         # Créer le lien de réinitialisation
-        reset_link = f"https://dsa-3v1v.onrender.com/api/accounts/verify-back/password-reset/?token={token.token}"
+        reset_link = f"{settings.BACKEND_URL}/api/accounts/verify-back/password-reset/?token={token.token}"
         
         # Sujet de l'email
         subject = "Réinitialisation de votre mot de passe"
@@ -157,7 +157,7 @@ def verify_reset_token(request):
         
         if token.is_valid():
             # Redirection vers le frontend avec le token
-            frontend_url = f"https://dsa-kohl-one.vercel.app/reset-password?token={token_value}"
+            frontend_url = f"{settings.FRONTEND_URL}/reset-password?token={token_value}"
             return redirect(frontend_url)
         else:
             return Response({
@@ -238,7 +238,7 @@ def verify_token(request):
         token = RegistrationToken.objects.get(token=token_value)
 
         if token.is_valid():
-            frontend_url = f"https://dsa-kohl-one.vercel.app/register?token={token_value}"
+            frontend_url = f"{settings.FRONTEND_URL}/register?token={token_value}"
             return redirect(frontend_url)
         
         else:

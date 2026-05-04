@@ -497,7 +497,7 @@ class TeamInvitationAdmin(admin.ModelAdmin):
     def invitation_links(self, obj):
         """Liens d'acceptation et de refus"""
         from django.conf import settings
-        base_url = getattr(settings, 'FRONTEND_URL', 'https://dsa-kohl-one.vercel.app')
+        base_url = settings.FRONTEND_URL
         accept_url = f"{base_url}/invitations/accept/{obj.token}"
         decline_url = f"{base_url}/invitations/decline/{obj.token}"
         

@@ -9,7 +9,7 @@ def send_team_invitation_email(invitation, request=None):
     Envoie un email d'invitation à rejoindre une équipe
     """
     # Construire les URLs d'acceptation et de refus
-    base_url = 'https://dsa-3v1v.onrender.com'
+    base_url = settings.BACKEND_URL
     
     accept_url = f"{base_url}/api/invitations/accept/{invitation.token}"
     decline_url = f"{base_url}/api/invitations/decline/{invitation.token}"
