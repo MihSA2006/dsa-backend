@@ -131,6 +131,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://dsa.insi.mg",
     "http://nextjs-1:3000",
     "https://nextjs-1:3000",
+    "https://dsa.insi-university.com",
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
