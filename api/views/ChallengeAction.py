@@ -47,11 +47,21 @@ def get_challenge_active(challenge_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
+SUPPORTED_LANGUAGES = ['python', 'c', 'javascript']
+
 def get_code(request):
     code = request.data.get('code')
     if not code:
         raise ValueError("Le code est requis")
     return code
+
+def get_language(request):
+    language = request.data.get('language')
+    if not language:
+        raise ValueError("Le champ 'language' est requis.")
+    if language not in SUPPORTED_LANGUAGES:
+        raise ValueError(f"Langage '{language}' non supporté. Langages acceptés : {', '.join(SUPPORTED_LANGUAGES)}.")
+    return language
 
 
 def get_test_cases(challenge):
@@ -154,19 +164,17 @@ def test_challenge_solution(request, challenge_id):
     if isinstance(challenge, Response):
         return challenge
 
-    # Récupérer le code envoyé dans le body de la requête
+    # Récupérer le code et le langage envoyés dans le body de la requête
     try:
         code = get_code(request)
-
+        language = get_language(request)
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
-    
-    # print("---------\nCode : \n", code)
 
-    # Vérifier si le code est sécurisé
-    resp_security = validate_code_security(code)
-    if resp_security is not True:
-        return resp_security
+    # Vérifier si le code est sécurisé (désactivé — géré par l'API externe)
+    # resp_security = validate_code_security(code)
+    # if resp_security is not True:
+    #     return resp_security
 
     # Récupérer les test cases associés au challenge
     test_cases = get_test_cases(challenge)
@@ -179,11 +187,9 @@ def test_challenge_solution(request, challenge_id):
     # Exécuter les tests du challenge avec le code soumis
     try:
         from api.challenge_validator import ChallengeValidator
-        # Création du validateur avec un timeout de sécurité
         validator = ChallengeValidator(timeout=10)
 
-        # Lancement de la validation du code par rapport aux test cases
-        result = validator.validate_submission(code, test_data)
+        result = validator.validate_submission(code, test_data, language)
 
         # Ajout d'un message explicite pour le frontend selon le succès ou l'échec
         if result['success']:
@@ -229,16 +235,17 @@ def submit_challenge_solution(request, challenge_id):
     if isinstance(attempt, Response):
         return attempt
 
-    # Récupérer le code soumis
+    # Récupérer le code et le langage soumis
     try:
         code = get_code(request)
+        language = get_language(request)
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
 
-    # Vérifier la sécurité du code soumis
-    resp_security = validate_code_security(code)
-    if resp_security is not True:
-        return resp_security
+    # Vérification de sécurité désactivée — gérée par l'API externe
+    # resp_security = validate_code_security(code)
+    # if resp_security is not True:
+    #     return resp_security
 
     # Récupérer les test cases du challenge
     test_cases = get_test_cases(challenge)
@@ -255,7 +262,7 @@ def submit_challenge_solution(request, challenge_id):
     # Exécuter les tests sur le code soumis
     try:
         validator = ChallengeValidator(timeout=10)
-        result = validator.validate_submission(code, test_data)
+        result = validator.validate_submission(code, test_data, language)
 
         passed_tests = result.get('passed_tests', 0)
         total_tests = result.get('total_tests', len(test_data))
@@ -358,19 +365,17 @@ def test_specific_test_case(request, challenge_id, test_case_id):
     
     # print("---------\n---------\n---------Test Case : \n", test_case)
 
-    # Récupérer le code soumis par l'utilisateur
+    # Récupérer le code et le langage soumis par l'utilisateur
     try:
         code = get_code(request)
+        language = get_language(request)
     except ValueError as e:
         return Response({'error': str(e)}, status=400)
-    
-    # print("---------\n---------\n---------\nCode : \n", code)
 
-
-    # Vérifier la sécurité du code
-    resp_security = validate_code_security(code)
-    if resp_security is not True:
-        return resp_security
+    # Vérification de sécurité désactivée — gérée par l'API externe
+    # resp_security = validate_code_security(code)
+    # if resp_security is not True:
+    #     return resp_security
 
     # Exécuter uniquement ce test case spécifique
     from api.challenge_validator import ChallengeValidator
@@ -380,7 +385,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
             'input_content': test_case.get_input(),
             'expected_output': test_case.get_output(),
             'order': test_case.order
-        }])
+        }], language)
 
         # print("----------------\n Result : \n", result)
 

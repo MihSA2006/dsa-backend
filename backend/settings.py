@@ -164,6 +164,8 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="misandratra.harena3@g
 
 FRONTEND_URL = config("FRONTEND_URL")
 BACKEND_URL = config("BACKEND_URL")
+EXECUTOR_API_URL = config("EXECUTOR_API_URL")
+
 
 AUTH_USER_MODEL = 'accounts.User'
 

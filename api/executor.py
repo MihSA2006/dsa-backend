@@ -1,188 +1,170 @@
-import subprocess
-import tempfile
 import os
-import shutil
-import time
-import sys
+import requests
 from typing import Dict, Any
 import uuid
+from django.conf import settings
 
-try:
-    import resource
-    HAS_RESOURCE = True
-except ImportError:
-    HAS_RESOURCE = False
+# ──────────────────────────────────────────────────────────────────────────────
+# URL de base de l'API d'exécution externe.
+# Configurer via la variable d'environnement EXECUTOR_API_URL.
+# ──────────────────────────────────────────────────────────────────────────────
+EXECUTOR_API_URL = settings.EXECUTOR_API_URL
+
+SUPPORTED_LANGUAGES = ['python', 'c', 'javascript']
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Ancien code d'exécution locale (désactivé, conservé pour référence)
+# ──────────────────────────────────────────────────────────────────────────────
+# import subprocess
+# import tempfile
+# import shutil
+# import time
+# import sys
+#
+# try:
+#     import resource
+#     HAS_RESOURCE = True
+# except ImportError:
+#     HAS_RESOURCE = False
+#
+#
+# class CodeExecutorLocal:
+#     DEFAULT_TIMEOUT = 10
+#     MEMORY_LIMIT = 128 * 1024 * 1024
+#
+#     def __init__(self, timeout: int = DEFAULT_TIMEOUT, execution_id: str = None):
+#         self.timeout = timeout
+#         self.execution_id = execution_id or str(uuid.uuid4())
+#         print(f"[INIT] CodeExecutor {self.execution_id} initialisé")
+#
+#     def _set_limits(self):
+#         if not HAS_RESOURCE:
+#             return
+#         try:
+#             resource.setrlimit(resource.RLIMIT_AS, (self.MEMORY_LIMIT, self.MEMORY_LIMIT))
+#             resource.setrlimit(resource.RLIMIT_CPU, (self.timeout, self.timeout))
+#         except Exception as e:
+#             pass
+#
+#     def execute(self, code: str) -> Dict[str, Any]:
+#         temp_dir = None
+#         script_path = None
+#         try:
+#             temp_dir = tempfile.mkdtemp(prefix=f'code_exec_{self.execution_id}_')
+#             script_path = os.path.join(temp_dir, f'script_{self.execution_id}.py')
+#             with open(script_path, 'w', encoding='utf-8') as f:
+#                 f.write(code)
+#             command = [sys.executable, script_path]
+#             start_time = time.time()
+#             if HAS_RESOURCE and os.name == 'posix':
+#                 result = subprocess.run(
+#                     command, capture_output=True, text=True,
+#                     timeout=self.timeout, cwd=temp_dir, preexec_fn=self._set_limits
+#                 )
+#             else:
+#                 result = subprocess.run(
+#                     command, capture_output=True, text=True,
+#                     timeout=self.timeout, cwd=temp_dir
+#                 )
+#             execution_time = time.time() - start_time
+#             if result.returncode == 0:
+#                 return {'success': True, 'output': result.stdout, 'error': None, 'execution_time': round(execution_time, 3)}
+#             else:
+#                 return {'success': False, 'output': None, 'error': result.stderr, 'execution_time': round(execution_time, 3)}
+#         except subprocess.TimeoutExpired:
+#             return {'success': False, 'output': None, 'error': f"Temps d'exécution dépassé ({self.timeout} secondes)", 'execution_time': self.timeout}
+#         except Exception as e:
+#             return {'success': False, 'output': None, 'error': f"Erreur lors de l'exécution : {str(e)}", 'execution_time': 0}
+#         finally:
+#             try:
+#                 if script_path and os.path.exists(script_path):
+#                     os.remove(script_path)
+#                 if temp_dir and os.path.exists(temp_dir):
+#                     shutil.rmtree(temp_dir)
+#             except Exception:
+#                 pass
+# ──────────────────────────────────────────────────────────────────────────────
 
 
 class CodeExecutor:
     """
-    Classe pour exécuter du code Python de manière sécurisée
-    Compatible Windows, Linux et Mac
+    Exécute du code via l'API externe EXECUTOR_API_URL.
+    Langages supportés : python, c, javascript.
     """
-    
-    # Timeout par défaut (en secondes)
+
     DEFAULT_TIMEOUT = 10
-    
-    # Limite de mémoire (en bytes) - 128 MB
-    MEMORY_LIMIT = 128 * 1024 * 1024
-    
-    def __init__(self, timeout: int = DEFAULT_TIMEOUT):
+    MEMORY_LIMIT = 128 * 1024 * 1024  # conservé pour compatibilité SecurityInfoView
 
-        self.timeout = timeout
-        print(f"[INIT] CodeExecutor initialisé avec timeout={self.timeout}s")
-
-    
     def __init__(self, timeout: int = DEFAULT_TIMEOUT, execution_id: str = None):
-        """
-        Initialise l'exécuteur de code
-        
-        Args:
-            timeout: Temps maximum d'exécution en secondes
-        """
         self.timeout = timeout
         self.execution_id = execution_id or str(uuid.uuid4())
-        print(f"[INIT] CodeExecutor {self.execution_id} initialisé")
+        print(f"[INIT] CodeExecutor {self.execution_id} initialisé (API externe)")
 
-    def _set_limits(self):
+    def execute(self, code: str, language: str = 'python') -> Dict[str, Any]:
         """
-        Définit les limites de ressources pour le processus
-        Cette fonction sera appelée dans le processus enfant
-        Fonctionne uniquement sur Linux/Mac
-        """
-        print("[LIMITS] Début de la configuration des limites de ressources")
-        if not HAS_RESOURCE:
-            print("[LIMITS] Module resource non disponible, aucune limite appliquée")
-            return
-        
-        try:
-            # Limite de mémoire virtuelle
-            resource.setrlimit(resource.RLIMIT_AS, 
-                             (self.MEMORY_LIMIT, self.MEMORY_LIMIT))
-            print(f"[LIMITS] Limite mémoire fixée à {self.MEMORY_LIMIT} bytes")
+        Envoie le code à l'API externe et retourne le résultat normalisé.
 
-            # Limite de temps CPU
-            resource.setrlimit(resource.RLIMIT_CPU, 
-                             (self.timeout, self.timeout))
-            print(f"[LIMITS] Limite CPU fixée à {self.timeout} secondes")
-        except Exception as e:
-            print(f"[LIMITS][ERREUR] Impossible d'appliquer les limites : {e}")
-            pass
-    
-    def execute(self, code: str) -> Dict[str, Any]:
+        Returns dict avec:
+            success (bool), output (str|None), error (str|None), execution_time (float)
         """
-        Exécute le code Python et retourne le résultat
-        
-        Args:
-            code: Le code Python à exécuter
-            
-        Returns:
-            Dictionnaire contenant:
-            - success: bool - True si l'exécution a réussi
-            - output: str - La sortie standard (stdout)
-            - error: str - Les erreurs (stderr)
-            - execution_time: float - Temps d'exécution en secondes
-        """
-        
-        temp_dir = None
-        script_path = None
-        
-        try:
-            print("[EXEC] Démarrage de l'exécution du code...")
-            # 1. Créer un répertoire temporaire
-            # temp_dir = tempfile.mkdtemp(prefix='code_exec_')
-            temp_dir = tempfile.mkdtemp(
-                prefix=f'code_exec_{self.execution_id}_'
-            )
-            print(f"[EXEC-{self.execution_id}] Répertoire : {temp_dir}")
-
-            # script_path = os.path.join(temp_dir, 'script.py')
-            script_path = os.path.join(temp_dir, f'script_{self.execution_id}.py')
-            
-            # 2. Écrire le code dans un fichier
-            with open(script_path, 'w', encoding='utf-8') as f:
-                f.write(code)
-            print(f"[EXEC] Code écrit dans le fichier : {script_path}")
-            
-            # 3. Préparer la commande d'exécution
-            command = [sys.executable, script_path]
-            print(f"[EXEC] Commande d'exécution préparée : {command}")
-            
-            # 4. Démarrer le chronomètre
-            start_time = time.time()
-            print("[EXEC] Chronomètre démarré")
-            
-            # 5. Exécuter le code
-            print("[EXEC] Lancement du subprocess...")
-            if HAS_RESOURCE and os.name == 'posix':
-                result = subprocess.run(
-                    command,
-                    capture_output=True,
-                    text=True,
-                    timeout=self.timeout,
-                    cwd=temp_dir,
-                    preexec_fn=self._set_limits
-                )
-            else:  # Windows
-                result = subprocess.run(
-                    command,
-                    capture_output=True,
-                    text=True,
-                    timeout=self.timeout,
-                    cwd=temp_dir
-                )
-            print("[EXEC] Subprocess terminé")
-            
-            # 6. Calculer le temps d'exécution
-            execution_time = time.time() - start_time
-            print(f"[EXEC] Temps d'exécution : {execution_time:.3f}s")
-            
-            # 7. Préparer la réponse
-            if result.returncode == 0:
-                print("[EXEC] Exécution réussie ✅")
-                print(f"[EXEC][OUTPUT] {result.stdout.strip()}")
-                return {
-                    'success': True,
-                    'output': result.stdout,
-                    'error': None,
-                    'execution_time': round(execution_time, 3)
-                }
-            else:
-                print(f"[EXEC] Erreur d'exécution ❌ Code retour : {result.returncode}")
-                print(f"[EXEC][STDERR] {result.stderr.strip()}")
-                return {
-                    'success': False,
-                    'output': None,
-                    'error': result.stderr,
-                    'execution_time': round(execution_time, 3)
-                }
-        
-        except subprocess.TimeoutExpired:
-            print(f"[EXEC][TIMEOUT] Le code a dépassé le délai de {self.timeout}s")
+        if language not in SUPPORTED_LANGUAGES:
             return {
                 'success': False,
                 'output': None,
-                'error': f'Temps d\'exécution dépassé ({self.timeout} secondes)',
-                'execution_time': self.timeout
-            }
-        
-        except Exception as e:
-            print(f"[EXEC][ERREUR] Exception inattendue : {e}")
-            return {
-                'success': False,
-                'output': None,
-                'error': f'Erreur lors de l\'exécution : {str(e)}',
+                'error': f"Langage '{language}' non supporté. Langages acceptés : {', '.join(SUPPORTED_LANGUAGES)}",
                 'execution_time': 0
             }
-        
-        finally:
-            # 8. Nettoyage : supprimer les fichiers temporaires
-            print("[EXEC][CLEANUP] Nettoyage des fichiers temporaires...")
-            try:
-                if script_path and os.path.exists(script_path):
-                    os.remove(script_path)
-                    print(f"[EXEC][CLEANUP] Script supprimé : {script_path}")
-                if temp_dir and os.path.exists(temp_dir):
-                    shutil.rmtree(temp_dir)
-                    print(f"[EXEC][CLEANUP] Répertoire supprimé : {temp_dir}")
-            except Exception as e:
-                print(f"[EXEC][CLEANUP][ERREUR] {e}")
+
+        payload = {
+            'language': language,
+            'code': code,
+        }
+
+        print(f"[EXEC-{self.execution_id}] Envoi vers API externe (langage={language})")
+
+        try:
+            response = requests.post(
+                EXECUTOR_API_URL,
+                json=payload,
+                timeout=self.timeout + 5,
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            error = data.get('error')
+            output = data.get('output')
+            execution_time = data.get('execution_time', 0)
+            success = error is None
+
+            print(f"[EXEC-{self.execution_id}] Réponse reçue — success={success}, time={execution_time}s")
+            return {
+                'success': success,
+                'output': output,
+                'error': error,
+                'execution_time': round(float(execution_time), 3),
+            }
+
+        except requests.exceptions.Timeout:
+            print(f"[EXEC-{self.execution_id}] Timeout de l'API externe")
+            return {
+                'success': False,
+                'output': None,
+                'error': f"L'API d'exécution n'a pas répondu dans le délai imparti ({self.timeout + 5}s)",
+                'execution_time': 0,
+            }
+        except requests.exceptions.RequestException as e:
+            print(f"[EXEC-{self.execution_id}] Erreur réseau : {e}")
+            return {
+                'success': False,
+                'output': None,
+                'error': f"Erreur de connexion à l'API d'exécution : {str(e)}",
+                'execution_time': 0,
+            }
+        except Exception as e:
+            print(f"[EXEC-{self.execution_id}] Erreur inattendue : {e}")
+            return {
+                'success': False,
+                'output': None,
+                'error': f"Erreur inattendue : {str(e)}",
+                'execution_time': 0,
+            }

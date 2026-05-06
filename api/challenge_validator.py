@@ -21,9 +21,10 @@ class ChallengeValidator:
         self.executor = CodeExecutor(timeout=timeout)
     
     def validate_submission(
-        self, 
-        user_code: str, 
-        test_cases: List[Dict[str, str]]
+        self,
+        user_code: str,
+        test_cases: List[Dict[str, str]],
+        language: str = 'python',
     ) -> Dict[str, Any]:
         """
         Valide le code de l'utilisateur contre tous les test cases
@@ -52,7 +53,7 @@ class ChallengeValidator:
             expected_output = test_case['expected_output']
             
             # Exécuter le code avec l'input spécifique
-            result = self._run_with_input(user_code, input_content)
+            result = self._run_with_input(user_code, input_content, language)
             
             if not result['success']:
                 # Erreur d'exécution
@@ -88,7 +89,7 @@ class ChallengeValidator:
             'results': results
         }
     
-    def _run_with_input(self, code: str, input_data: str) -> Dict[str, Any]:
+    def _run_with_input(self, code: str, input_data: str, language: str = 'python') -> Dict[str, Any]:
         """
         Exécute le code avec un input spécifique
         
@@ -111,7 +112,7 @@ class ChallengeValidator:
         
         # Exécuter le code modifié
         # return self.executor.execute(modified_code)
-        return executor.execute(modified_code)
+        return executor.execute(modified_code, language)
 
     def _inject_input(self, code: str, input_data: str) -> str:
         # Normaliser l'indentation (remplacer les tabs par des espaces)

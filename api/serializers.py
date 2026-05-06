@@ -27,13 +27,12 @@ class CodeExecutionSerializer(serializers.Serializer):
         }
     )
     
-    # Champ optionnel : le langage (pour évolution future)
     language = serializers.ChoiceField(
-        choices=['python'],
-        default='python',
-        required=False,
+        choices=['python', 'c', 'javascript'],
+        required=True,
         error_messages={
-            'invalid_choice': 'Langage non supporté. Seul "python" est accepté.'
+            'required': 'Le champ "language" est obligatoire.',
+            'invalid_choice': 'Langage non supporté. Langages acceptés : python, c, javascript.'
         }
     )
     

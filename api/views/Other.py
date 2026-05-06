@@ -53,31 +53,17 @@ class ExecuteCodeView(APIView):
         
         logger.info(f"Exécution de code demandée (langage: {language}, longueur: {len(code)})")
         
-        # 3. Vérifier la sécurité du code
-        print("[POST] Vérification de la sécurité du code...")
-        security_checker = SecurityChecker()
-        is_safe, error_message = security_checker.check_code(code)
-        
-        if not is_safe:
-            print(f"[POST] Code dangereux détecté : {error_message}")
-            logger.warning(f"Code dangereux détecté : {error_message}")
-            return Response(
-                {
-                    'success': False,
-                    'error': f'Sécurité : {error_message}',
-                    'output': None,
-                    'execution_time': 0
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        print("[POST] Code validé comme sûr. Passage à l'exécution...")
-        
-        # 4. Exécuter le code
+        # 3. Vérification de sécurité désactivée (gérée par l'API externe)
+        # security_checker = SecurityChecker()
+        # is_safe, error_message = security_checker.check_code(code)
+        # if not is_safe:
+        #     return Response({'success': False, 'error': f'Sécurité : {error_message}', 'output': None, 'execution_time': 0}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Exécuter le code via l'API externe
         try:
             executor = CodeExecutor(timeout=5)
             print("[POST] Exécution du code en cours...")
-            result = executor.execute(code)
+            result = executor.execute(code, language)
             print("[POST] Exécution terminée.")
             
             # Log du résultat
