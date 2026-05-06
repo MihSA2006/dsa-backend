@@ -92,33 +92,30 @@ class ChallengeValidator:
     def _run_with_input(self, code: str, input_data: str, language: str = 'python') -> Dict[str, Any]:
         """
         Exécute le code avec un input spécifique
-        
+
         Args:
-            code: Le code Python à exécuter
+            code: Le code à exécuter
             input_data: Les données d'input à fournir au programme
-        
+            language: Le langage du code (python, javascript, c)
+
         Returns:
             Résultat de l'exécution
         """
-        
-        # Créer un code modifié qui utilise l'input fourni
-        # On remplace les appels input() par des lectures depuis une liste
+
         executor = CodeExecutor(
             timeout=self.timeout,
             execution_id=f"{self.validation_id}_{uuid.uuid4()}"
         )
-        # modified_code = self._inject_input(code, input_data)
-        modified_code = self._inject_input(code, input_data)
-        
-        # Exécuter le code modifié
-        # return self.executor.execute(modified_code)
+        modified_code = self._inject_input(code, input_data, language)
+
         return executor.execute(modified_code, language)
 
-    def _inject_input(self, code: str, input_data: str) -> str:
+    def _inject_input(self, code: str, input_data: str, language: str = 'python') -> str:
         # Normaliser l'indentation (remplacer les tabs par des espaces)
         normalized_code = code.replace('\t', '    ')
-        
-        injected_code = f"""import sys
+
+        if language == 'python':
+            injected_code = f"""import sys
 from io import StringIO
 
 # Injecter l'input
@@ -128,8 +125,56 @@ sys.stdin = StringIO(_input_data)
 # Code utilisateur
 {normalized_code}
 """
-        
-        # print("-------------------\nCode with Input Injected : \n", injected_code)
+        elif language == 'javascript':
+            # Échapper les backslashes et les quotes dans input_data pour JavaScript
+            escaped_input = input_data.replace('\\', '\\\\').replace('`', '\\`').replace('$', '\\$')
+            injected_code = f"""const _input_lines = `{escaped_input}`.split('\\n').filter(l => l.trim());
+let _input_index = 0;
+
+function input() {{
+    if (_input_index < _input_lines.length) {{
+        return _input_lines[_input_index++];
+    }}
+    return '';
+}}
+
+// Code utilisateur
+{normalized_code}
+"""
+        elif language == 'c':
+            # Échapper les caractères spéciaux pour C
+            escaped_input = (input_data
+                .replace('\\', '\\\\')
+                .replace('"', '\\"')
+                .replace('\n', '\\n')
+                .replace('\r', '\\r')
+                .replace('\t', '\\t'))
+            injected_code = f"""#include <stdio.h>
+#include <string.h>
+
+static const char *_input_data = "{escaped_input}";
+static int _input_pos = 0;
+static char _input_line[4096];
+
+const char* input() {{
+    int i = 0;
+    while (_input_pos < strlen(_input_data) && _input_data[_input_pos] != '\\n' && i < 4095) {{
+        _input_line[i++] = _input_data[_input_pos++];
+    }}
+    if (_input_pos < strlen(_input_data) && _input_data[_input_pos] == '\\n') {{
+        _input_pos++;
+    }}
+    _input_line[i] = '\\0';
+    return _input_line;
+}}
+
+// Code utilisateur
+{normalized_code}
+"""
+        else:
+            # Fallback pour les langages non supportés
+            injected_code = normalized_code
+
         return injected_code
 
     def _compare_outputs(self, user_output: str, expected_output: str) -> bool:
