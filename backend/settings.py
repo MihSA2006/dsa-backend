@@ -9,7 +9,7 @@ import cloudinary.api
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY")
-SSL_MODE = config("SSL_MODE")
+SSL_MODE = config("SSL_MODE", default="require").strip().lower()
 
 
 DEBUG = True
