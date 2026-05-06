@@ -64,7 +64,7 @@ class TestCaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestCase
         fields = [
-            'id', 'order', 'is_sample',
+            'id', 'order', 'is_sample', 'xp_reward',
             'input_file', 'output_file',
             'input_content', 'output_content'
         ]
@@ -308,7 +308,7 @@ class ChallengeCreateSerializer(serializers.ModelSerializer):
         fields = [
             'title', 'slug', 'difficulty',
             'description_file', 'description_pdf', 'description_img',
-            'template_file', 'xp_reward'
+            'template_file', 'xp_required'
         ]
 
     def validate_slug(self, value):
@@ -321,10 +321,10 @@ class TestCaseCreateSerializer(serializers.ModelSerializer):
     """
     Serializer pour la création d'un test case
     """
-    
+
     class Meta:
         model = TestCase
-        fields = ['challenge', 'input_file', 'output_file', 'order', 'is_sample']
+        fields = ['challenge', 'input_file', 'output_file', 'order', 'is_sample', 'xp_reward']
 
 
 class ChallengeSubmissionSerializer(serializers.Serializer):

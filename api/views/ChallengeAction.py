@@ -79,7 +79,8 @@ def build_test_data(test_cases):
         {
             'input_content': tc.get_input(),
             'expected_output': tc.get_output(),
-            'order': tc.order
+            'order': tc.order,
+            'xp_reward': tc.xp_reward
         }
         for tc in test_cases
     ]
@@ -266,13 +267,17 @@ def submit_challenge_solution(request, challenge_id):
 
         passed_tests = result.get('passed_tests', 0)
         total_tests = result.get('total_tests', len(test_data))
-        success_rate = passed_tests / total_tests if total_tests > 0 else 0
 
-        # Calcul de l'XP obtenue pour cette soumission
-        xp_current_submit = int(challenge.xp_reward * success_rate)
+        # Calcul de l'XP obtenue basé sur chaque test case réussi
+        xp_current_submit = 0
+        for test_result in result.get('results', []):
+            if test_result.get('passed'):
+                test_num = test_result.get('test_number', 1) - 1
+                if 0 <= test_num < len(test_data):
+                    xp_current_submit += test_data[test_num].get('xp_reward', 0)
 
         # Si le minimum d'XP requis pour valider n'est pas atteint
-        if attempt.xp_earned < challenge.xp_required and xp_current_submit < challenge.xp_required:
+        if xp_current_submit < challenge.xp_required:
             return Response({
                 'success': False,
                 'message': (
@@ -283,20 +288,18 @@ def submit_challenge_solution(request, challenge_id):
                 'failed': total_tests - passed_tests
             }, status=status.HTTP_200_OK)
 
-        # Mise à jour progressive de l'XP : on ne diminue jamais l'XP
-        previous_xp = attempt.xp_earned
-        if xp_current_submit > previous_xp:
-            xp_diff = xp_current_submit - previous_xp
-            attempt.xp_earned = min(previous_xp + xp_diff, challenge.xp_reward)
+        # Mise à jour de l'XP : on ne diminue jamais l'XP
+        if xp_current_submit > attempt.xp_earned:
+            attempt.xp_earned = xp_current_submit
 
-        # Mise à jour du temps de complétion si l'utilisateur n'a pas encore le maximum d'XP
+        # Mise à jour du temps de complétion à la première réussite
         if attempt.completed_at is None:
             attempt.completed_at = timezone.now()
             time_diff = attempt.completed_at - attempt.started_at
             attempt.completion_time = int(time_diff.total_seconds())
 
-        # Statut → terminé si XP max atteint
-        if attempt.xp_earned >= challenge.xp_reward:
+        # Statut → terminé si tous les tests sont passés
+        if passed_tests == total_tests:
             attempt.status = "completed"
 
         attempt.save()
@@ -313,16 +316,19 @@ def submit_challenge_solution(request, challenge_id):
         if hasattr(request.user, 'update_stats'):
             request.user.update_stats()
 
+        # Calculer le XP total possible pour ce challenge
+        xp_total_possible = sum(tc.get('xp_reward', 0) for tc in test_data)
+
         # Réponse finale envoyée au frontend
         return Response({
             'success': True,
             'passed': passed_tests,
             'failed': total_tests - passed_tests,
             'xp_earned': attempt.xp_earned,
-            'xp_total': challenge.xp_reward,
+            'xp_total': xp_total_possible,
             'completion_time': attempt.completion_time,
             'status': attempt.status,
-            'message': f"Soumission enregistrée. XP total : {attempt.xp_earned}/{challenge.xp_reward}"
+            'message': f"Soumission enregistrée. XP total : {attempt.xp_earned}/{xp_total_possible}"
         }, status=status.HTTP_200_OK)
 
     except Exception as e:

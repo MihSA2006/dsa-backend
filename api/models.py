@@ -62,9 +62,6 @@ class Challenge(models.Model):
         verbose_name="Fichier template (.py)"
     )
 
-    # XP Reward
-    xp_reward = models.IntegerField(default=100, verbose_name="Points XP")
-
     # Nombre de participants
     participants_count = models.IntegerField(default=0)
 
@@ -100,6 +97,11 @@ class Challenge(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.get_difficulty_display()})"
+
+    @property
+    def xp_reward(self):
+        """Calcule automatiquement la somme des XP de tous les test cases"""
+        return sum(tc.xp_reward for tc in self.test_cases.all())
 
     def get_description(self):
         return read_cloudinary_text(self.description_file)
@@ -151,6 +153,7 @@ class TestCase(models.Model):
 
     order = models.IntegerField(default=0)
     is_sample = models.BooleanField(default=False)
+    xp_reward = models.IntegerField(default=0, verbose_name="Points XP du test case")
 
     class Meta:
         ordering = ['order']

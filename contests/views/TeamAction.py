@@ -248,16 +248,16 @@ def accept_invitation(request, token):
     try:
         # Sauvegarder les informations pour le cleanup
         invitee = invitation.invitee
-        contest = invitation.team.contest
+        team_nom = invitation.team.nom
 
         invitation.accept()
-        
-        # Supprimer toutes les autres invitations de cet utilisateur pour ce contest (même déjà acceptées)
-        TeamInvitation.objects.filter(invitee=invitee, team__contest=contest).exclude(id=invitation.id).delete()
-        
+
+        # Supprimer TOUTES les invitations de cet utilisateur
+        TeamInvitation.objects.filter(invitee=invitee).exclude(id=invitation.id).delete()
+
         return Response({
             'success': True,
-            'message': f'Félicitations ! Vous avez rejoint l\'équipe {invitation.team.nom}',
+            'message': f'Félicitations ! Vous avez rejoint l\'équipe {team_nom}',
             'team': {
                 'id': invitation.team.id,
                 'nom': invitation.team.nom,
@@ -300,15 +300,16 @@ def decline_invitation(request, token):
         }, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        # Stocker le nom de l'équipe avant suppression
+        # Sauvegarder les informations avant suppression
+        invitee = invitation.invitee
         team_nom = invitation.team.nom
-        
-        # Supprimer l'invitation au lieu de simplement la décliner
-        invitation.delete()
-        
+
+        # Supprimer TOUTES les invitations de cet utilisateur
+        TeamInvitation.objects.filter(invitee=invitee).delete()
+
         return Response({
             'success': True,
-            'message': f'Vous avez refusé l\'invitation à rejoindre l\'équipe {team_nom}'
+            'message': f'Vous avez refusé l\'invitation à rejoindre l\'équipe {team_nom}. Toutes vos invitations ont été supprimées.'
         }, status=status.HTTP_200_OK)
         
     except ValidationError as e:
