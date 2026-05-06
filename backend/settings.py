@@ -14,6 +14,8 @@ SSL_MODE = config("SSL_MODE", default="require").strip().lower()
 
 DEBUG = True
 
+print("SSL_MODE = ", SSL_MODE)
+
 ALLOWED_HOSTS = ['*']
 
 DEFAULT_CHARSET = "utf-8"
