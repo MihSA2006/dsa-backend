@@ -124,6 +124,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    # Format des dates/heures dans les réponses API (ISO 8601 avec timezone)
+    'DATETIME_FORMAT': 'iso-8601',
+    'DATE_FORMAT': 'iso-8601',
 }
 
 CSRF_TRUSTED_ORIGINS = [
@@ -180,10 +183,13 @@ HANDLER404 = 'accounts.views.custom_404_view'
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+# Timezone Madagascar (UTC+3)
+TIME_ZONE = 'Indian/Antananarivo'
 
 USE_I18N = True
 
+# Active la gestion des timezones
+# Django stocke en UTC mais affiche dans TIME_ZONE
 USE_TZ = True
 
 # ============================================
