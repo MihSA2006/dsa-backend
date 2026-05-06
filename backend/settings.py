@@ -9,6 +9,8 @@ import cloudinary.api
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY")
+SSL_MODE = config("SSL_MODE")
+
 
 DEBUG = True
 
@@ -76,7 +78,7 @@ DATABASES = {
         'HOST': config("DB_HOST", default="db"),
         'PORT': config("DB_PORT", default="5432"),
         'OPTIONS': {
-            'sslmode': 'disable',
+            'sslmode': SSL_MODE,
         },
     }
 }
@@ -103,7 +105,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://dsa.insi-university.com",
-    
+    "https://dsa-kohl-one.vercel.app",
+    "https://dsa-3v1v.onrender.com"
 ]
 
 REST_FRAMEWORK = {
@@ -132,6 +135,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://nextjs-1:3000",
     "https://nextjs-1:3000",
     "https://dsa.insi-university.com",
+    "https://dsa-kohl-one.vercel.app",
+    "https://dsa-3v1v.onrender.com"
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
