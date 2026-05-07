@@ -325,7 +325,8 @@ def submit_contest_challenge(request, contest_id, challenge_id):
         {
             'input_content': tc.get_input(),
             'expected_output': tc.get_output(),
-            'order': tc.order
+            'order': tc.order,
+            'xp_reward': tc.xp_reward
         }
         for tc in test_cases
     ]
@@ -335,19 +336,38 @@ def submit_contest_challenge(request, contest_id, challenge_id):
         validator = ChallengeValidator(timeout=10)
         result = validator.validate_submission(code, test_data, language)
         
+        # Calcul de l'XP obtenue basé sur chaque test case réussi
+        xp_earned = 0
+        for test_result in result.get('results', []):
+            if test_result.get('passed'):
+                test_num = test_result.get('test_number', 1) - 1
+                if 0 <= test_num < len(test_data):
+                    xp_earned += test_data[test_num].get('xp_reward', 0)
+
         passed_tests = result.get('passed_tests', 0)
         total_tests = result.get('total_tests', len(test_data))
-        success_rate = passed_tests / total_tests if total_tests > 0 else 0
         is_success = result.get('success', False)
         
-        # Calculer l'XP et le temps
-        xp_earned = int(challenge.xp_reward * success_rate)
+        # Le temps d'un challenge commence au premier join d'un membre de l'équipe
+        from api.models import UserChallengeAttempt
+        team_attempts = UserChallengeAttempt.objects.filter(
+            user__in=team.membres.all(),
+            challenge=challenge
+        ).order_by('started_at')
         
-        # Calculer le temps depuis le début du contest
-        time_diff = timezone.now() - contest.date_debut
+        if team_attempts.exists():
+            start_time = team_attempts.first().started_at
+            print(f"[submit_contest_challenge] Start time trouvé: {start_time}")
+        else:
+            # Si pas d'inscription trouvée (ne devrait pas arriver avec l'auto-join), 
+            # on prend le début du contest comme fallback
+            start_time = contest.date_debut
+            print(f"[submit_contest_challenge] Pas de start time, fallback sur début contest")
+
+        time_diff = timezone.now() - start_time
         temps_soumission = int(time_diff.total_seconds())
         
-        # Créer ou mettre à jour la soumission
+        # Créer ou mettre à jour la soumission de l'équipe
         submission, created = ContestSubmission.objects.update_or_create(
             equipe=team,
             challenge=challenge,
@@ -361,7 +381,33 @@ def submit_contest_challenge(request, contest_id, challenge_id):
             }
         )
         
-        print(f"=== [submit_contest_challenge] Response ===\nSuccess: {is_success}\nPassed: {passed_tests}\nFailed: {total_tests - passed_tests}\nXP Earned: {xp_earned}\nTemps: {temps_soumission}\n===")
+        # Synchroniser l'état pour TOUS les membres de l'équipe dans leurs profils individuels
+        for member in team.membres.all():
+            m_attempt, _ = UserChallengeAttempt.objects.get_or_create(
+                user=member,
+                challenge=challenge,
+                defaults={'started_at': start_time}
+            )
+            
+            # Mise à jour de l'XP individuelle : on ne diminue jamais l'XP
+            if xp_earned > m_attempt.xp_earned:
+                m_attempt.xp_earned = xp_earned
+            
+            # Si tout est réussi, marquer comme complété
+            if passed_tests == total_tests:
+                m_attempt.status = "completed"
+                if m_attempt.completed_at is None:
+                    m_attempt.completed_at = timezone.now()
+                    diff = m_attempt.completed_at - m_attempt.started_at
+                    m_attempt.completion_time = int(diff.total_seconds())
+            
+            m_attempt.save()
+            
+            # Mettre à jour les stats globales du membre
+            if hasattr(member, 'update_stats'):
+                member.update_stats()
+
+        print(f"=== [submit_contest_challenge] Response ===\nSuccess: {is_success}\nPassed: {passed_tests}\nFailed: {total_tests - passed_tests}\nXP Earned: {xp_earned}\nTemps depuis start challenge: {temps_soumission}s\n===")
         return Response({
             'success': is_success,
             'passed': passed_tests,

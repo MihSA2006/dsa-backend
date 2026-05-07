@@ -107,10 +107,11 @@ def validate_code_security(code):
 @permission_classes([IsAuthenticated])
 def join_challenge(request, challenge_id):
     """
-    Permet à un utilisateur de rejoindre un challenge
-    
-    POST /api/challenges/{id}/join/
+    Permet à un utilisateur de rejoindre un challenge.
+    Si l'utilisateur appartient à une équipe, tous les membres de l'équipe
+    rejoignent également le challenge automatiquement.
     """
+    from contests.models import Team
     
     challenge = get_challenge_active(challenge_id)
     if isinstance(challenge, Response):
@@ -123,22 +124,49 @@ def join_challenge(request, challenge_id):
     )
     
     if created:
-        Challenge.objects.filter(id=challenge.id).update(
-            participants_count=F('participants_count') + 1
-        )
+        print(f"[join_challenge] L'utilisateur {request.user.email} a rejoint le challenge {challenge_id}")
+        new_participants = 1
         
-        # Première fois que l'utilisateur rejoint ce challenge
-        request.user.update_stats()
+        # Mettre à jour les stats du créateur
+        if hasattr(request.user, 'update_stats'):
+            request.user.update_stats()
+            
+        # Si le challenge appartient à au moins un contest, 
+        # on inscrit aussi les membres de ses équipes
+        if challenge.contests.exists():
+            # Trouver tous les membres de toutes les équipes de l'utilisateur
+            # pour les inscrire également
+            team_members = User.objects.filter(
+                team_memberships__in=Team.objects.filter(membres=request.user)
+            ).distinct().exclude(id=request.user.id)
+            
+            for member in team_members:
+                _, m_created = UserChallengeAttempt.objects.get_or_create(
+                    user=member,
+                    challenge=challenge
+                )
+                if m_created:
+                    print(f"[join_challenge] Co-membre {member.email} rejoint automatiquement (Challenge de Contest)")
+                    new_participants += 1
+                    if hasattr(member, 'update_stats'):
+                        member.update_stats()
+        else:
+            print(f"[join_challenge] Challenge {challenge_id} n'appartient à aucun contest, pas d'auto-join d'équipe.")
+        
+        # Mettre à jour le compteur global de participants
+        Challenge.objects.filter(id=challenge.id).update(
+            participants_count=F('participants_count') + new_participants
+        )
         
         return Response({
             'message': True,
-            # 'attempt': UserChallengeAttemptSerializer(attempt).data
+            'joined_count': new_participants
         }, status=status.HTTP_201_CREATED)
     else:
         # L'utilisateur a déjà rejoint ce challenge
         return Response({
             'message': False,
-            # 'attempt': UserChallengeAttemptSerializer(attempt).data
+            'detail': "Challenge déjà rejoint"
         }, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
