@@ -169,12 +169,20 @@ def test_contest_challenge(request, contest_id, challenge_id):
     
     # Récupérer le code
     code = request.data.get('code')
-    language = request.data.get('language') or 'python'
+    language = request.data.get('language')
     print(f"\n--- [test_contest_challenge] ---\nContest ID: {contest_id}\nChallenge ID: {challenge_id}\nTeam ID: {team_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code) if code else 0}\n---")
+    
     if not code:
         print("!!! [test_contest_challenge] Code is missing")
         return Response(
             {'error': 'Le code est requis'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
+    if not language:
+        print("!!! [test_contest_challenge] Language is missing")
+        return Response(
+            {'error': "Le champ 'language' est requis."},
             status=status.HTTP_400_BAD_REQUEST
         )
     
@@ -207,7 +215,7 @@ def test_contest_challenge(request, contest_id, challenge_id):
     # Exécuter les tests
     try:
         validator = ChallengeValidator(timeout=10)
-        result = validator.validate_submission(code, test_data)
+        result = validator.validate_submission(code, test_data, language)
         
         if result['success']:
             result['message'] = "✅ Tous les tests ont réussi ! Vous pouvez soumettre."
@@ -274,14 +282,23 @@ def submit_contest_challenge(request, contest_id, challenge_id):
     
     # Récupérer le code
     code = request.data.get('code')
-    language = request.data.get('language') or 'python'
+    language = request.data.get('language')
     print(f"\n=== [submit_contest_challenge] ===\nContest ID: {contest_id}\nChallenge ID: {challenge_id}\nTeam ID: {team_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code) if code else 0}\n===")
+    
     if not code:
         print("!!! [submit_contest_challenge] Code is missing")
         return Response(
             {'error': 'Le code est requis'},
             status=status.HTTP_400_BAD_REQUEST
         )
+        
+    if not language:
+        print("!!! [submit_contest_challenge] Language is missing")
+        return Response(
+            {'error': "Le champ 'language' est requis."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
     
     # Vérifier la sécurité
     security_checker = SecurityChecker()
@@ -312,11 +329,12 @@ def submit_contest_challenge(request, contest_id, challenge_id):
     # Exécuter les tests
     try:
         validator = ChallengeValidator(timeout=10)
-        result = validator.validate_submission(code, test_data)
+        result = validator.validate_submission(code, test_data, language)
         
         passed_tests = result.get('passed_tests', 0)
         total_tests = result.get('total_tests', len(test_data))
         success_rate = passed_tests / total_tests if total_tests > 0 else 0
+        is_success = result.get('success', False)
         
         # Calculer l'XP et le temps
         xp_earned = int(challenge.xp_reward * success_rate)
@@ -339,9 +357,9 @@ def submit_contest_challenge(request, contest_id, challenge_id):
             }
         )
         
-        print(f"=== [submit_contest_challenge] Response ===\nSuccess: True\nPassed: {passed_tests}\nFailed: {total_tests - passed_tests}\nXP Earned: {xp_earned}\nTemps: {temps_soumission}\n===")
+        print(f"=== [submit_contest_challenge] Response ===\nSuccess: {is_success}\nPassed: {passed_tests}\nFailed: {total_tests - passed_tests}\nXP Earned: {xp_earned}\nTemps: {temps_soumission}\n===")
         return Response({
-            'success': True,
+            'success': is_success,
             'passed': passed_tests,
             'failed': total_tests - passed_tests,
             'xp_earned': xp_earned,
