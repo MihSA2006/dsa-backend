@@ -281,6 +281,10 @@ def submit_contest_challenge(request, contest_id, challenge_id):
         )
     
     # Récupérer le code
+    print(f"DEBUG: request.data type: {type(request.data)}")
+    print(f"DEBUG: request.data keys: {list(request.data.keys())}")
+    print(f"DEBUG: request.data content: {request.data}")
+    
     code = request.data.get('code')
     language = request.data.get('language')
     print(f"\n=== [submit_contest_challenge] ===\nContest ID: {contest_id}\nChallenge ID: {challenge_id}\nTeam ID: {team_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code) if code else 0}\n===")

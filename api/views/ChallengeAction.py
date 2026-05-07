@@ -241,11 +241,14 @@ def submit_challenge_solution(request, challenge_id):
 
     # Récupérer le code et le langage soumis
     try:
+        print(f"DEBUG: request.data type: {type(request.data)}")
+        print(f"DEBUG: request.data keys: {list(request.data.keys())}")
         code = get_code(request)
         language = get_language(request)
         print(f"\n=== [submit_challenge_solution] ===\nChallenge ID: {challenge_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code)}\n===")
     except ValueError as e:
         print(f"!!! [submit_challenge_solution] ValueError: {str(e)}")
+        print(f"DEBUG payload: {request.data}")
         return Response({'error': str(e)}, status=400)
 
     # Vérification de sécurité désactivée — gérée par l'API externe
