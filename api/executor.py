@@ -120,7 +120,8 @@ class CodeExecutor:
             'code': code,
         }
 
-        print(f"[EXEC-{self.execution_id}] Envoi vers API externe (langage={language})")
+        print(f"[EXEC-{self.execution_id}] Envoi vers API externe (langage={language}, url={EXECUTOR_API_URL})")
+        print(f"[EXEC-{self.execution_id}] Payload length: {len(code)}")
 
         try:
             response = requests.post(
@@ -136,7 +137,9 @@ class CodeExecutor:
             execution_time = data.get('execution_time', 0)
             success = error is None
 
-            print(f"[EXEC-{self.execution_id}] Réponse reçue — success={success}, time={execution_time}s")
+            print(f"[EXEC-{self.execution_id}] Réponse reçue — status={response.status_code}, success={success}, time={execution_time}s")
+            if error:
+                print(f"[EXEC-{self.execution_id}] API Error: {error}")
             return {
                 'success': success,
                 'output': output,

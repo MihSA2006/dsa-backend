@@ -193,5 +193,12 @@ const char* input() {{
         user_lines = [line.strip() for line in user_output.strip().split('\n') if line.strip()]
         expected_lines = [line.strip() for line in expected_output.strip().split('\n') if line.strip()]
         
+        is_correct = user_lines == expected_lines
+        
+        print(f"[VALIDATOR] Comparison:")
+        print(f"  User lines ({len(user_lines)}): {user_lines}")
+        print(f"  Expected lines ({len(expected_lines)}): {expected_lines}")
+        print(f"  Result: {is_correct}")
+        
         # Comparer ligne par ligne
-        return user_lines == expected_lines
+        return is_correct

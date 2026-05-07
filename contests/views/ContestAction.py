@@ -169,7 +169,10 @@ def test_contest_challenge(request, contest_id, challenge_id):
     
     # Récupérer le code
     code = request.data.get('code')
+    language = request.data.get('language') or 'python'
+    print(f"\n--- [test_contest_challenge] ---\nContest ID: {contest_id}\nChallenge ID: {challenge_id}\nTeam ID: {team_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code) if code else 0}\n---")
     if not code:
+        print("!!! [test_contest_challenge] Code is missing")
         return Response(
             {'error': 'Le code est requis'},
             status=status.HTTP_400_BAD_REQUEST
@@ -213,6 +216,7 @@ def test_contest_challenge(request, contest_id, challenge_id):
                 f"❌ {result['passed_tests']}/{result['total_tests']} tests réussis."
             )
         
+        print(f"--- [test_contest_challenge] Response ---\nSuccess: {result['success']}\nPassed: {result['passed_tests']}/{result['total_tests']}\nMessage: {result['message']}\n---")
         return Response(result)
     except Exception as e:
         logger.error(f"Erreur lors du test de la solution : {str(e)}")
@@ -270,7 +274,10 @@ def submit_contest_challenge(request, contest_id, challenge_id):
     
     # Récupérer le code
     code = request.data.get('code')
+    language = request.data.get('language') or 'python'
+    print(f"\n=== [submit_contest_challenge] ===\nContest ID: {contest_id}\nChallenge ID: {challenge_id}\nTeam ID: {team_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code) if code else 0}\n===")
     if not code:
+        print("!!! [submit_contest_challenge] Code is missing")
         return Response(
             {'error': 'Le code est requis'},
             status=status.HTTP_400_BAD_REQUEST
@@ -332,6 +339,7 @@ def submit_contest_challenge(request, contest_id, challenge_id):
             }
         )
         
+        print(f"=== [submit_contest_challenge] Response ===\nSuccess: True\nPassed: {passed_tests}\nFailed: {total_tests - passed_tests}\nXP Earned: {xp_earned}\nTemps: {temps_soumission}\n===")
         return Response({
             'success': True,
             'passed': passed_tests,

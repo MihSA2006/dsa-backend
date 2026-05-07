@@ -169,7 +169,9 @@ def test_challenge_solution(request, challenge_id):
     try:
         code = get_code(request)
         language = get_language(request)
+        print(f"\n--- [test_challenge_solution] ---\nChallenge ID: {challenge_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code)}\n---")
     except ValueError as e:
+        print(f"!!! [test_challenge_solution] ValueError: {str(e)}")
         return Response({'error': str(e)}, status=400)
 
     # Vérifier si le code est sécurisé (désactivé — géré par l'API externe)
@@ -202,6 +204,7 @@ def test_challenge_solution(request, challenge_id):
             )
 
         # Retour final de la réponse au frontend
+        print(f"--- [test_challenge_solution] Response ---\nSuccess: {result['success']}\nPassed: {result['passed_tests']}/{result['total_tests']}\nMessage: {result['message']}\n---")
         return Response(result, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -240,7 +243,9 @@ def submit_challenge_solution(request, challenge_id):
     try:
         code = get_code(request)
         language = get_language(request)
+        print(f"\n=== [submit_challenge_solution] ===\nChallenge ID: {challenge_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code)}\n===")
     except ValueError as e:
+        print(f"!!! [submit_challenge_solution] ValueError: {str(e)}")
         return Response({'error': str(e)}, status=400)
 
     # Vérification de sécurité désactivée — gérée par l'API externe
@@ -320,6 +325,7 @@ def submit_challenge_solution(request, challenge_id):
         xp_total_possible = sum(tc.get('xp_reward', 0) for tc in test_data)
 
         # Réponse finale envoyée au frontend
+        print(f"=== [submit_challenge_solution] Response ===\nSuccess: True\nPassed: {passed_tests}\nFailed: {total_tests - passed_tests}\nXP Earned: {attempt.xp_earned}/{xp_total_possible}\nStatus: {attempt.status}\n===")
         return Response({
             'success': True,
             'passed': passed_tests,
@@ -375,7 +381,9 @@ def test_specific_test_case(request, challenge_id, test_case_id):
     try:
         code = get_code(request)
         language = get_language(request)
+        print(f"\n+++ [test_specific_test_case] +++\nChallenge ID: {challenge_id}\nTestCase ID: {test_case_id}\nUser: {request.user.email}\nLanguage: {language}\nCode length: {len(code)}\n+++")
     except ValueError as e:
+        print(f"!!! [test_specific_test_case] ValueError: {str(e)}")
         return Response({'error': str(e)}, status=400)
 
     # Vérification de sécurité désactivée — gérée par l'API externe
@@ -401,6 +409,7 @@ def test_specific_test_case(request, challenge_id, test_case_id):
         else:
             result['message'] = "❌ Échec sur ce test case. Vérifie ton code."
 
+        print(f"+++ [test_specific_test_case] Response +++\nSuccess: {result['success']}\nMessage: {result['message']}\nUser Output: {result.get('results', [{}])[0].get('user_output')}\n+++")
         return Response(result, status=status.HTTP_200_OK)
 
     except Exception as e:
